@@ -175,13 +175,14 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
                 }
             }
             Spacer(Modifier.weight(1f))
-            val progress = if (totalSec == 0) 0f else 1f - remaining.toFloat() / totalSec
+            val remainingNow = remaining
+            val progress = if (totalSec == 0) 0f else 1f - remainingNow.toFloat() / totalSec
             Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(Color.White.copy(alpha = 0.3f))) {
                 Box(Modifier.fillMaxWidth(progress).height(6.dp).clip(RoundedCornerShape(3.dp)).background(Lime))
             }
             Spacer(Modifier.height(12.dp))
-            val m = remaining / 60
-            val s = remaining % 60
+            val m = remainingNow / 60
+            val s = remainingNow % 60
             val timerStyle = MaterialTheme.typography.displayLarge
                 .copy(fontSize = MaterialTheme.typography.displayLarge.fontSize * 1.2f, shadow = Shadow(Color.Black.copy(alpha = 0.6f), blurRadius = 16f))
             Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {

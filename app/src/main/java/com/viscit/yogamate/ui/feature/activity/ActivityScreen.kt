@@ -66,7 +66,9 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
     var filter by remember { mutableStateOf(Level.PEMULA.label) }
     val filters = listOf("Semua", Level.PEMULA.label, Level.MENENGAH.label, Level.LANJUTAN.label)
 
-    val monthHistory = AppSession.history.filter { it.month == month && it.year == year }
+    val monthHistory = remember(month, year, AppSession.history) {
+        AppSession.history.filter { it.month == month && it.year == year }
+    }
     val shown = if (filter == "Semua") monthHistory else monthHistory.filter { it.level.label == filter }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
@@ -112,6 +114,10 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
         }
         Spacer(Modifier.height(8.dp))
         val maxMin = (monthHistory.maxOfOrNull { it.minutes } ?: 1).coerceAtLeast(1)
+        // Menit per hari diakumulasi sekali agar sel heatmap tidak memfilter history per sel.
+        val minutesByDay = remember(monthHistory) {
+            IntArray(32).also { acc -> monthHistory.forEach { acc[it.dayOfMonth] += it.minutes } }
+        }
         val cells = firstOffset + days
         val rows = (cells + 6) / 7
         repeat(rows) { r ->
@@ -119,7 +125,7 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
                 repeat(7) { c ->
                     val day = r * 7 + c - firstOffset + 1
                     val valid = day in 1..days
-                    val mins = if (valid) monthHistory.filter { it.dayOfMonth == day }.sumOf { it.minutes } else 0
+                    val mins = if (valid) minutesByDay[day] else 0
                     val bg = when {
                         !valid || mins == 0 -> androidx.compose.ui.graphics.Color.Transparent
                         mins >= maxMin -> Ink

@@ -59,15 +59,19 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: 
     // Urutan label hari sesuai desain: S S R K J S M (Senin..Minggu)
     val dayLabels = listOf("S", "S", "R", "K", "J", "S", "M")
     val startOffset = (today + 6) % 7 // posisi hari ini dalam minggu Senin-pertama
-    val week = (0..6).map { i ->
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_MONTH, i - startOffset)
-        cal
+    val week = remember(startOffset) {
+        (0..6).map { i ->
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_MONTH, i - startOffset)
+            cal
+        }
     }
     // Hari berlatih minggu ini dihitung dari riwayat sesi yoga sungguhan (bulan di history 1-based).
-    val practicedDates = AppSession.history
-        .map { Triple(it.year, it.month, it.dayOfMonth) }
-        .toSet()
+    val practicedDates = remember(AppSession.history) {
+        AppSession.history
+            .map { Triple(it.year, it.month, it.dayOfMonth) }
+            .toSet()
+    }
     fun practiced(cal: Calendar) = practicedDates.contains(Triple(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)))
     val practicedCount = week.count { practiced(it) }
 

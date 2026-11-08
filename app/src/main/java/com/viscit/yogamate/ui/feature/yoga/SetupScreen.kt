@@ -239,8 +239,8 @@ private fun StepGacha(rolling: Boolean, onRollDone: () -> Unit) {
                 .graphicsLayer {
                     scaleX = pulse.value * (1f + squash.value * 0.06f)
                     scaleY = pulse.value * (1f - squash.value * 0.08f)
-                }
-                .rotate(wobble.value),
+                    rotationZ = wobble.value
+                },
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box {
