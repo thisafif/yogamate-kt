@@ -1,5 +1,16 @@
 package com.viscit.yogamate.ui.feature.yoga
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,15 +48,21 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -64,11 +81,23 @@ import com.viscit.yogamate.ui.theme.LavenderSoft
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 // YOGA-01..04 Mulai Yoga (Figma 112:3824/3943/4086/4213): satu route, 4 step internal (usulan plan §6.3).
 @Composable
 fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> Unit) {
     val step = YogaSessionState.step
+    // Reset progress di onDispose (layar sudah lepas dari render → tanpa kilatan step 1).
+    // Lanjut ke sesi tidak ikut me-reset: step tetap ada bila kembali dari layar sesi.
+    var continuedToSession by remember { mutableStateOf(false) }
+    DisposableEffect(Unit) {
+        onDispose { if (!continuedToSession) YogaSessionState.reset() }
+    }
+    // Gacha berputar: box ikut goyang + getar dulu (lihat StepGacha), baru pindah ke step pose.
+    var gachaRolling by remember { mutableStateOf(false) }
+    // Keluar dari step 2 (back/close) → matikan rolling agar tidak me-roll ulang saat kembali.
+    LaunchedEffect(step) { if (step != 2) gachaRolling = false }
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
     ) {
@@ -79,19 +108,22 @@ fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> U
         Spacer(Modifier.height(24.dp))
         when (step) {
             1 -> StepLevel()
-            2 -> StepGacha()
+            2 -> StepGacha(gachaRolling, onRollDone = {
+                YogaSessionState.pose = Poses.random()
+                YogaSessionState.step = 3
+                gachaRolling = false
+            })
             3 -> StepPose()
             else -> StepFour(onStartSession)
         }
         Spacer(Modifier.weight(1f))
         when (step) {
             1 -> YmPrimaryButton("Lanjutkan", { YogaSessionState.step = 2 }, trailingIcon = { ArrowForwardIcon() })
-            2 -> YmPrimaryButton("Temukan poseku", {
-                YogaSessionState.pose = Poses.random()
-                YogaSessionState.step = 3
-            }, leadingIcon = { Icon(Icons.Default.Shuffle, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
+            2 -> YmPrimaryButton("Temukan poseku", { gachaRolling = true },
+                enabled = !gachaRolling,
+                leadingIcon = { Icon(Icons.Default.Shuffle, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
             3 -> YmPrimaryButton("Pilih durasi", { YogaSessionState.step = 4 }, trailingIcon = { ArrowForwardIcon() })
-            else -> YmPrimaryButton("Mulai latihan", onStartSession, leadingIcon = { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
+            else -> YmPrimaryButton("Mulai latihan", { continuedToSession = true; onStartSession() }, leadingIcon = { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -154,8 +186,42 @@ private fun levelSubtitle(level: Level): String = when (level) {
     Level.LANJUTAN -> "Eksplorasi kekuatan dan keseimbangan."
 }
 
+// Gacha heboh: antisipasi mampat → goyang ±22° makin cepat (~2,7 detik) dengan getar makin kuat
+// → finale putaran penuh 360° + pop skala, lalu onRollDone() pindah ke step pose.
 @Composable
-private fun StepGacha() {
+private fun StepGacha(rolling: Boolean, onRollDone: () -> Unit) {
+    val context = LocalContext.current
+    val wobble = remember { Animatable(0f) }
+    val pulse = remember { Animatable(1f) }
+    val squash = remember { Animatable(0f) }
+    LaunchedEffect(rolling) {
+        if (!rolling) return@LaunchedEffect
+        val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+        } else {
+            @Suppress("DEPRECATION") context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        // antisipasi: box mampat sesaat sebelum digoyang (charge-up)
+        vibrator.vibrate(VibrationEffect.createOneShot(60, 80))
+        squash.animateTo(1f, tween(220))
+        // goyang kiri-kanan ±22°, jeda makin pendek, getar tiap ayunan makin kuat
+        val durations = listOf(620, 500, 390, 300, 230, 180, 140, 110, 90, 70, 50)
+        var target = 22f
+        durations.forEachIndexed { i, d ->
+            val amp = (80 + i * 18).coerceAtMost(255)
+            vibrator.vibrate(VibrationEffect.createOneShot(40, amp))
+            wobble.animateTo(target, tween(d))
+            target = -target
+        }
+        // finale: putaran penuh + getar kuat + pop skala
+        vibrator.vibrate(VibrationEffect.createOneShot(120, 255))
+        wobble.animateTo(360f, tween(420, easing = LinearEasing))
+        wobble.snapTo(0f)
+        pulse.animateTo(1.15f, tween(120))
+        pulse.animateTo(1f, tween(180))
+        squash.animateTo(0f, tween(150))
+        onRollDone()
+    }
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
         Text("02 · GACHA GERAKAN", style = MaterialTheme.typography.labelSmall, color = Muted)
         Spacer(Modifier.height(8.dp))
@@ -166,7 +232,16 @@ private fun StepGacha() {
             style = MaterialTheme.typography.bodyLarge, color = Muted, textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(32.dp))
-        Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxWidth()) {
+        Box(
+            contentAlignment = Alignment.BottomCenter,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = pulse.value * (1f + squash.value * 0.06f)
+                    scaleY = pulse.value * (1f - squash.value * 0.08f)
+                }
+                .rotate(wobble.value),
+        ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box {
                     Surface(
@@ -186,13 +261,6 @@ private fun StepGacha() {
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Surface(shape = RoundedCornerShape(50), color = Ink, modifier = Modifier.rotate(-6f)) {
-                    Text(
-                        "Ruang untuk eksplorasi",
-                        style = MaterialTheme.typography.labelMedium, color = Color.White,
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                    )
-                }
             }
         }
         Spacer(Modifier.height(24.dp))
@@ -277,19 +345,30 @@ private fun StepFour(onStartSession: () -> Unit) {
     Spacer(Modifier.height(8.dp))
     Text("Dengarkan tubuhmu, pilih durasi yang nyaman.", style = MaterialTheme.typography.bodyLarge, color = Muted)
     Spacer(Modifier.height(24.dp))
+    val options = listOf(1, 2, 3, 5)
+    var sliderValue by remember { mutableFloatStateOf(options.indexOf(YogaSessionState.durationMin).coerceAtLeast(0).toFloat()) }
+
+    val selectedDuration = options[sliderValue.roundToInt().coerceIn(0, options.lastIndex)]
     Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
         Text("Durasi latihan", style = MaterialTheme.typography.titleMedium, color = Ink, modifier = Modifier.weight(1f))
-        Text("${YogaSessionState.durationMin}", style = MaterialTheme.typography.displayMedium, color = Ink)
+        Text("$selectedDuration", style = MaterialTheme.typography.displayMedium, color = Ink)
         Text(" menit", style = MaterialTheme.typography.bodyLarge, color = Muted)
     }
     Spacer(Modifier.height(8.dp))
-    val options = listOf(1, 2, 3, 5)
-    var sliderValue by remember { mutableFloatStateOf(options.indexOf(YogaSessionState.durationMin).coerceAtLeast(0).toFloat()) }
+    val scope = rememberCoroutineScope()
     Slider(
         value = sliderValue,
-        onValueChange = {
-            sliderValue = it
-            YogaSessionState.durationMin = options[it.toInt().coerceIn(0, options.lastIndex)]
+        onValueChange = { sliderValue = it },
+        onValueChangeFinished = {
+            val target = sliderValue.roundToInt().coerceIn(0, options.lastIndex)
+            YogaSessionState.durationMin = options[target]
+            scope.launch {
+                animate(
+                    initialValue = sliderValue,
+                    targetValue = target.toFloat(),
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
+                ) { value, _ -> sliderValue = value }
+            }
         },
         valueRange = 0f..(options.size - 1).toFloat(),
         steps = options.size - 2,
@@ -303,8 +382,8 @@ private fun StepFour(onStartSession: () -> Unit) {
         options.forEach { o ->
             Text(
                 "$o menit",
-                style = if (o == YogaSessionState.durationMin) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
-                color = if (o == YogaSessionState.durationMin) Ink else Muted,
+                style = if (o == selectedDuration) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+                color = if (o == selectedDuration) Ink else Muted,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.weight(1f),
             )

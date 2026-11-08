@@ -132,7 +132,7 @@ fun RegisterScreen(onSuccess: () -> Unit, onLogin: () -> Unit) {
                 !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> error = "Format email belum benar."
                 score < 3 -> error = "Kata sandi belum memenuhi semua syarat."
                 confirm != password -> error = "Konfirmasi kata sandi belum sama."
-                else -> { AppSession.login(name.trim()); onSuccess() }
+                else -> { AppSession.login(name.trim(), email, password); onSuccess() }
             }
         }, trailingIcon = { ArrowForwardIcon() })
         Spacer(Modifier.height(16.dp))

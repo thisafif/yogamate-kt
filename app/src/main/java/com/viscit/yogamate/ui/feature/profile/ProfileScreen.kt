@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -52,7 +53,7 @@ import com.viscit.yogamate.ui.theme.Muted
 
 // PROFILE-01 Profil (Figma 104:2837): non-tab, dibuka dari ikon kanan atas 3 tab utama.
 @Composable
-fun ProfileScreen(onBack: () -> Unit, onOpenHistory: () -> Unit, onOpenAchievement: () -> Unit) {
+fun ProfileScreen(onBack: () -> Unit, onEditProfile: () -> Unit, onOpenEducation: () -> Unit, onOpenHistory: () -> Unit, onOpenAchievement: () -> Unit) {
     var showGuide by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
@@ -91,12 +92,12 @@ fun ProfileScreen(onBack: () -> Unit, onOpenHistory: () -> Unit, onOpenAchieveme
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.weight(1f)) {
                 Text("Tujuan latihanku", style = MaterialTheme.typography.bodyMedium, color = Muted)
-                Text("Lebih fleksibel", style = MaterialTheme.typography.titleMedium, color = Ink)
+                Text(AppSession.userGoal, style = MaterialTheme.typography.titleMedium, color = Ink)
             }
             Surface(
                 shape = RoundedCornerShape(50),
                 color = LavenderLight,
-                onClick = { /* Edit profil: belum ada alur di Figma (Need Confirmation) */ },
+                onClick = onEditProfile,
             ) {
                 Text("Edit profil", style = MaterialTheme.typography.labelMedium, color = Ink, modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
             }
@@ -107,6 +108,7 @@ fun ProfileScreen(onBack: () -> Unit, onOpenHistory: () -> Unit, onOpenAchieveme
         Spacer(Modifier.height(8.dp))
         MenuRow(icon = Icons.Default.Schedule, label = "Riwayat latihan", onClick = onOpenHistory)
         MenuRow(painterRes = R.drawable.ic_nav_pencapaian, label = "Pencapaian", onClick = onOpenAchievement)
+        MenuRow(icon = Icons.Default.SelfImprovement, label = "Edukasi kesehatan", onClick = onOpenEducation)
         MenuRow(icon = Icons.AutoMirrored.Outlined.MenuBook, label = "Panduan & latihan aman", onClick = { showGuide = true })
         Spacer(Modifier.height(32.dp))
 

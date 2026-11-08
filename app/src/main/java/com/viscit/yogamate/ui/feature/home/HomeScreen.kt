@@ -18,6 +18,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SelfImprovement
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -41,6 +44,7 @@ import com.viscit.yogamate.ui.components.SectionHeader
 import com.viscit.yogamate.ui.components.YmPrimaryButton
 import com.viscit.yogamate.ui.feature.yoga.DetailSheet
 import com.viscit.yogamate.ui.theme.Ink
+import androidx.compose.ui.graphics.Color
 import com.viscit.yogamate.ui.theme.LavenderSoft
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
@@ -49,7 +53,7 @@ import java.util.Calendar
 
 // HOME-01 Beranda (Figma 102:1444). Ikon profil kanan atas membuka Profil (bukan tab).
 @Composable
-fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenHistory: () -> Unit) {
+fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: () -> Unit, onOpenHistory: () -> Unit) {
     var detail by remember { mutableStateOf<HistoryItem?>(null) }
     val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
     // Urutan label hari sesuai desain: S S R K J S M (Senin..Minggu)
@@ -60,6 +64,12 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenHistory: ()
         cal.add(Calendar.DAY_OF_MONTH, i - startOffset)
         cal
     }
+    // Hari berlatih minggu ini dihitung dari riwayat sesi yoga sungguhan (bulan di history 1-based).
+    val practicedDates = AppSession.history
+        .map { Triple(it.year, it.month, it.dayOfMonth) }
+        .toSet()
+    fun practiced(cal: Calendar) = practicedDates.contains(Triple(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH)))
+    val practicedCount = week.count { practiced(it) }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
         Spacer(Modifier.height(8.dp))
@@ -88,11 +98,32 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenHistory: ()
             }
         }
         Spacer(Modifier.height(24.dp))
+        // Banner pintasan ke modul Edukasi Kesehatan.
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color.White,
+            border = androidx.compose.foundation.BorderStroke(1.dp, OutlineSoft),
+            onClick = onOpenEducation,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(16.dp)) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(48.dp).background(LavenderSoft, CircleShape)) {
+                    Icon(Icons.Default.SelfImprovement, null, tint = Ink, modifier = Modifier.size(24.dp))
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("Edukasi kesehatan", style = MaterialTheme.typography.titleMedium, color = Ink)
+                    Text("Kenali dasar sebelum berlatih", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                }
+                ArrowForwardIcon()
+            }
+        }
+        Spacer(Modifier.height(24.dp))
 
         SectionHeader("Ritmemu minggu ini", "Progres", onOpenHistory)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("0", style = MaterialTheme.typography.displayMedium, color = Ink)
+            Text("$practicedCount", style = MaterialTheme.typography.displayMedium, color = Ink)
             Text(" /7 ", style = MaterialTheme.typography.headlineMedium, color = Muted)
             Text("hari berlatih", style = MaterialTheme.typography.bodyLarge, color = Muted)
         }
@@ -100,6 +131,7 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenHistory: ()
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             week.forEachIndexed { i, cal ->
                 val isToday = i == startOffset
+                val isPracticed = practiced(cal)
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
                     Text(dayLabels[i], style = MaterialTheme.typography.labelSmall, color = Muted)
                     Spacer(Modifier.height(8.dp))
@@ -109,8 +141,8 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenHistory: ()
                             .fillMaxWidth()
                             .height(44.dp)
                             .clip(CircleShape)
-                            .background(if (isToday) Lime else androidx.compose.ui.graphics.Color.White)
-                            .border(1.dp, if (isToday) Ink else OutlineSoft, CircleShape),
+                            .background(if (isPracticed) Lime else androidx.compose.ui.graphics.Color.White)
+                            .border(1.dp, if (isToday || isPracticed) Ink else OutlineSoft, CircleShape),
                     ) {
                         Text("${cal.get(Calendar.DAY_OF_MONTH)}", style = MaterialTheme.typography.labelMedium, color = Ink)
                     }

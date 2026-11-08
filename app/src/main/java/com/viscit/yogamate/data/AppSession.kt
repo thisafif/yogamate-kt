@@ -19,6 +19,10 @@ object AppSession {
         private set
     var userName by mutableStateOf("")
         private set
+    var userEmail by mutableStateOf("")
+        private set
+    var userGoal by mutableStateOf("Lebih fleksibel")
+        private set
     var history by mutableStateOf<List<HistoryItem>>(emptyList())
         private set
 
@@ -27,6 +31,8 @@ object AppSession {
         onboardingDone = prefs.getBoolean("onboarding_done", false)
         loggedIn = prefs.getBoolean("logged_in", false)
         userName = prefs.getString("user_name", "") ?: ""
+        userEmail = prefs.getString("user_email", "") ?: ""
+        userGoal = prefs.getString("user_goal", "Lebih fleksibel") ?: "Lebih fleksibel"
         history = decode(prefs.getString("history", "[]") ?: "[]")
     }
 
@@ -35,15 +41,34 @@ object AppSession {
         prefs.edit().putBoolean("onboarding_done", true).apply()
     }
 
-    fun login(name: String) {
+    fun login(name: String, email: String = "", password: String = "") {
         loggedIn = true
         userName = name
-        prefs.edit().putBoolean("logged_in", true).putString("user_name", name).apply()
+        userEmail = email
+        prefs.edit()
+            .putBoolean("logged_in", true)
+            .putString("user_name", name)
+            .putString("user_email", email)
+            // password disimpan lokal untuk simulasi (belum ada backend); ganti saat backend nyata.
+            .putString("user_password", password)
+            .apply()
     }
 
     fun logout() {
         loggedIn = false
         prefs.edit().putBoolean("logged_in", false).apply()
+    }
+
+    fun updateProfile(name: String, goal: String, email: String, newPassword: String? = null) {
+        userName = name
+        userGoal = goal
+        userEmail = email
+        val edit = prefs.edit()
+            .putString("user_name", name)
+            .putString("user_goal", goal)
+            .putString("user_email", email)
+        if (newPassword != null) edit.putString("user_password", newPassword)
+        edit.apply()
     }
 
     fun addHistory(item: HistoryItem) {

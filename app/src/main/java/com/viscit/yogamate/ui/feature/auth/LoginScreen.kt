@@ -76,7 +76,7 @@ fun LoginScreen(onSuccess: () -> Unit, onRegister: () -> Unit) {
             when {
                 !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> error = "Format email belum benar."
                 password.length < 8 -> error = "Gunakan setidaknya 8 karakter."
-                else -> { AppSession.login(email.substringBefore("@")); onSuccess() }
+                else -> { AppSession.login(email.substringBefore("@"), email, password); onSuccess() }
             }
         }, trailingIcon = { ArrowForwardIcon() })
         Spacer(Modifier.height(16.dp))

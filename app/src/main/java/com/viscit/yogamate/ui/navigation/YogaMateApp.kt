@@ -35,13 +35,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.viscit.yogamate.data.AppSession
+import com.viscit.yogamate.data.YogaSessionState
 import com.viscit.yogamate.ui.feature.activity.ActivityScreen
 import com.viscit.yogamate.ui.feature.achievement.AchievementScreen
+import com.viscit.yogamate.ui.feature.education.EducationScreen
 import com.viscit.yogamate.ui.feature.auth.ChooseAuthScreen
 import com.viscit.yogamate.ui.feature.auth.LoginScreen
 import com.viscit.yogamate.ui.feature.auth.RegisterScreen
 import com.viscit.yogamate.ui.feature.home.HomeScreen
 import com.viscit.yogamate.ui.feature.onboarding.OnboardingScreen
+import com.viscit.yogamate.ui.feature.profile.EditProfileScreen
 import com.viscit.yogamate.ui.feature.profile.ProfileScreen
 import com.viscit.yogamate.ui.feature.yoga.CompleteScreen
 import com.viscit.yogamate.ui.feature.yoga.SessionScreen
@@ -60,6 +63,8 @@ object Routes {
     const val ACTIVITY = "activity"        // screen Figma "Riwayat", label tab: Aktivitas
     const val ACHIEVEMENT = "achievement"
     const val PROFILE = "profile"
+    const val PROFILE_EDIT = "profile/edit"
+    const val EDUCATION = "education"
     const val YOGA_SETUP = "yoga/setup"
     const val YOGA_SESSION = "yoga/session"
     const val YOGA_COMPLETE = "yoga/complete"
@@ -96,10 +101,15 @@ fun YmBottomBar(nav: NavHostController) {
                             // Keluar dari Profil dulu (tanpa menyimpan state-nya) agar
                             // Profil tidak ikut ter-save/restore dalam back stack tab.
                             if (route == Routes.PROFILE) nav.popBackStack()
-                            nav.navigate(tab.route) {
-                                popUpTo(Routes.HOME) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            // Tab tujuan sudah ada di back stack (mis. dibuka lewat
+                            // "Progres"/"Lihat semua") → cukup kembali ke sana; pola
+                            // navigate+restoreState di atasnya macet untuk kasus ini.
+                            if (!nav.popBackStack(tab.route, inclusive = false)) {
+                                nav.navigate(tab.route) {
+                                    popUpTo(Routes.HOME) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         }
                     },
@@ -182,6 +192,7 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
                 onProfile = { nav.navigate(Routes.PROFILE) },
                 onStartYoga = { nav.navigate(Routes.YOGA_SETUP) },
                 onOpenHistory = { nav.navigate(Routes.ACTIVITY) },
+                onOpenEducation = { nav.navigate(Routes.EDUCATION) },
             ) }
             composable(Routes.ACTIVITY) { ActivityScreen(
                 onProfile = { nav.navigate(Routes.PROFILE) },
@@ -191,11 +202,19 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
                 onProfile = { nav.navigate(Routes.PROFILE) },
                 onOpenHistory = { nav.navigate(Routes.ACTIVITY) },
             ) }
+            composable(Routes.PROFILE_EDIT) { EditProfileScreen(
+                onBack = { nav.popBackStack() },
+            ) }
+            composable(Routes.EDUCATION) { EducationScreen(
+                onBack = { nav.popBackStack() },
+            ) }
             // Link internal Profil keluar lewat popBackStack() dulu (buang state Profil),
             // lalu navigate dengan pola tab — mencegah stack [tab, PROFIL, tab] yang
             // membuat navigasi bottom bar macet/Profil "menguasai" tab.
             composable(Routes.PROFILE) { ProfileScreen(
                 onBack = { nav.popBackStack() },
+                onEditProfile = { nav.navigate(Routes.PROFILE_EDIT) },
+                onOpenEducation = { nav.navigate(Routes.EDUCATION) },
                 onOpenHistory = {
                     nav.popBackStack()
                     nav.navigate(Routes.ACTIVITY) {
@@ -213,8 +232,12 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
                     }
                 },
             ) }
+            // ← pada alur setup mundur satu step (step 1 = keluar); ✕ keluar ke beranda.
+            // Reset progress ditangani onDispose di SetupScreen (tanpa kilatan step 1).
             composable(Routes.YOGA_SETUP) { SetupScreen(
-                onBack = { nav.popBackStack() },
+                onBack = {
+                    if (YogaSessionState.step > 1) YogaSessionState.step -= 1 else nav.popBackStack()
+                },
                 onClose = { nav.popBackStack() },
                 onStartSession = { nav.navigate(Routes.YOGA_SESSION) },
             ) }
@@ -225,9 +248,11 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
             ) }
             composable(Routes.YOGA_COMPLETE) { CompleteScreen(
                 onSeeHistory = {
+                    YogaSessionState.reset()
                     nav.navigate(Routes.ACTIVITY) { popUpTo(Routes.HOME) }
                 },
                 onBackHome = {
+                    YogaSessionState.reset()
                     nav.navigate(Routes.HOME) { popUpTo(Routes.HOME) { inclusive = true } }
                 },
                 onBack = { nav.popBackStack() },
