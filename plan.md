@@ -4,7 +4,7 @@
 Implementasi UI YogaMate (Kotlin + Jetpack Compose) sesuai `plan_yogamate_android_revised.md`. Bottom navigation **3 tab** (Beranda, Aktivitas, Pencapaian); **Profil non-tab** dibuka dari ikon kanan atas. Sumber visual: Figma file `fQ1MjzqWso0FTKj8CgLbJ9` (diperiksa via Figma REST API — MCP Figma tidak terekspos sebagai tool di sesi ini, API key dari konfigurasi host dipakai langsung; metode dan data identik).
 
 ## 2. Hasil audit codebase (Tahap 0) — Verified
-- Proyek template Compose baru: package `com.viscit.yogamate`, hanya `MainActivity.kt` + `ui/theme/{Color,Theme,Type}.kt` (default template, belum dipakai berarti).
+- Proyek template Compose baru: package `com.kel9.yogamate`, hanya `MainActivity.kt` + `ui/theme/{Color,Theme,Type}.kt` (default template, belum dipakai berarti).
 - Gradle: AGP 9.4.1, Kotlin 2.2.10, Compose BOM 2026.02.01, minSdk 26, targetSdk/compileSdk 37, Java 11.
 - Dependency tersedia: compose-ui, material3, activity-compose, core-ktx, lifecycle-runtime-ktx. **Belum ada navigation** → ditambah `androidx.navigation:navigation-compose` (kebutuhan teknis nyata) dan `material-icons-extended` (sudah dicakup BOM, untuk ikon Material kecil).
 - Belum ada: API/auth/database/kamera/ML — tidak dikarang (batasan #5–#6 plan).

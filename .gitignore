@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+.gopath/
+.env
+google-services.json
+app/google-services.json
+.firebaserc
+firebase-debug.log
+firestore-debug.log
