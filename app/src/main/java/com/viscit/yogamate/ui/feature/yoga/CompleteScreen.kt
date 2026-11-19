@@ -37,7 +37,6 @@ import com.viscit.yogamate.ui.theme.Lavender
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 
-// YOGA-06 Selesai Yoga (Figma 117:4593).
 @Composable
 fun CompleteScreen(onBack: () -> Unit, onSeeHistory: () -> Unit, onBackHome: () -> Unit) {
     Column(
@@ -97,6 +96,5 @@ fun CompleteScreen(onBack: () -> Unit, onSeeHistory: () -> Unit, onBackHome: () 
     }
 }
 
-// Trofi memakai aset ikon nav asli dari Figma agar bentuk sama.
 @Composable
 private fun painterIconTrophy() = androidx.compose.ui.res.painterResource(com.viscit.yogamate.R.drawable.ic_nav_pencapaian)

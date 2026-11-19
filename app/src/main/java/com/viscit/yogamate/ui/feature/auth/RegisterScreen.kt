@@ -40,7 +40,6 @@ import com.viscit.yogamate.ui.theme.Lavender
 import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Muted
 
-// AUTH-02 Register (Figma 98:594). UI-only: validasi lokal, belum ada backend.
 @Composable
 fun RegisterScreen(onSuccess: () -> Unit, onLogin: () -> Unit) {
     var name by remember { mutableStateOf("") }

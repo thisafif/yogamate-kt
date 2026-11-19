@@ -37,7 +37,6 @@ import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 
-// Konten statis Edukasi Kesehatan (PRD section 11) — sumber umum, bukan diagnosis personal.
 private data class EducationTopic(val icon: ImageVector, val title: String, val body: List<String>)
 
 private val TOPICS = listOf(
@@ -75,7 +74,6 @@ private val TOPICS = listOf(
     ),
 )
 
-// Modul Edukasi Kesehatan (PRD IA #5): satu layar, 4 kartu konten statis.
 @Composable
 fun EducationScreen(onBack: () -> Unit) {
     Column(

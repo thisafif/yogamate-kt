@@ -4,7 +4,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
-// Aplikasi hanya punya tema terang sesuai desain Figma (#FFFCF7)
 private val LightColors = lightColorScheme(
     primary = Ink,
     onPrimary = Cream,

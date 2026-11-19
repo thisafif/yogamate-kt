@@ -49,7 +49,6 @@ import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 
-// ACH-01 Pencapaian (Figma 102:2295). Ikon profil kanan atas, bukan tab.
 @Composable
 fun AchievementScreen(onProfile: () -> Unit, onOpenHistory: () -> Unit) {
     val achievements = Achievements.compute(AppSession.history)

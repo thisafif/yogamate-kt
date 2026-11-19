@@ -46,10 +46,8 @@ import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 
-// Opsi tujuan latihan untuk Edit Profil (belum ada node khusus di Figma — mengikuti pola kartu pilihan StepLevel).
 private val GOAL_OPTIONS = listOf("Lebih fleksibel", "Mengurangi stres", "Membangun kebiasaan", "Menambah tenaga")
 
-// Edit Profil: non-tab, dibuka dari tombol "Edit profil" di Profil.
 @Composable
 fun EditProfileScreen(onBack: () -> Unit) {
     var name by remember { mutableStateOf(AppSession.userName) }
@@ -131,8 +129,6 @@ fun EditProfileScreen(onBack: () -> Unit) {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
             Spacer(Modifier.height(8.dp))
         }
-//        Text("Perubahan tersimpan di perangkatmu.", style = MaterialTheme.typography.bodySmall, color = Muted)
-//        Spacer(Modifier.height(16.dp))
         YmPrimaryButton(
             "Simpan perubahan",
             {

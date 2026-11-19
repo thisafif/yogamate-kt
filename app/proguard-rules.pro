@@ -14,6 +14,9 @@
 -dontwarn com.google.mediapipe.proto.CalculatorProfileProto$CalculatorProfile
 -dontwarn com.google.mediapipe.proto.GraphTemplateProto$CalculatorGraphTemplate
 
+# ONNX Runtime Android memanggil kelas internal lewat JNI/reflection saat session dibuat.
+-keep class ai.onnxruntime.** { *; }
+
 # Nonaktifkan optimasi (inlining/class merging) agar stack-walk protobuf tetap
 # valid. Shrinking & obfuscation tetap berjalan — penghematan ikon extended
 # tidak hilang.

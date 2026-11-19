@@ -32,7 +32,6 @@ import com.viscit.yogamate.ui.theme.Muted
 
 private val MutedAuth get() = Muted
 
-// AUTH-01 (Figma 98:502): pilih register atau login.
 @Composable
 fun ChooseAuthScreen(onRegister: () -> Unit, onLogin: () -> Unit) {
     Column(

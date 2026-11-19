@@ -8,8 +8,6 @@ import androidx.compose.runtime.setValue
 import org.json.JSONArray
 import org.json.JSONObject
 
-// State aplikasi UI-first: onboarding/login + riwayat disimpan di SharedPreferences.
-// Belum ada backend/auth/DB di codebase — integrasi nyata adalah pekerjaan terpisah (plan.md).
 object AppSession {
     private lateinit var prefs: SharedPreferences
 
@@ -27,6 +25,8 @@ object AppSession {
         private set
 
     fun init(context: Context) {
+        Poses.loadFrom(context)
+        YogaSessionState.ensurePose()
         prefs = context.getSharedPreferences("yogamate", Context.MODE_PRIVATE)
         onboardingDone = prefs.getBoolean("onboarding_done", false)
         loggedIn = prefs.getBoolean("logged_in", false)
@@ -111,18 +111,27 @@ object AppSession {
     }
 }
 
-// State sesi yoga yang sedang berjalan (setup step 1-4 → session → complete), in-memory saja.
 object YogaSessionState {
-    var step by mutableStateOf(1)            // 1..4 (Mulai Yoga 1..4)
+    var step by mutableStateOf(1)
     var level by mutableStateOf(Level.PEMULA)
-    var pose by mutableStateOf(Poses.POSE_POHON)
+
+    // State tetap Compose-observable, tapi tidak ada pose dummy sebelum seed dimuat.
+    private var currentPose by mutableStateOf<Pose?>(null)
+    var pose: Pose
+        get() = currentPose ?: error("Pose belum diinisialisasi dari seed")
+        set(value) { currentPose = value }
+
     var durationMin by mutableStateOf(1)
-    var resultAccuracy by mutableStateOf(0)  // disimulasikan saat sesi selesai
+    var resultAccuracy by mutableStateOf(0)
+
+    fun ensurePose() {
+        if (currentPose == null) currentPose = Poses.ALL.first()
+    }
 
     fun reset() {
         step = 1
         level = Level.PEMULA
-        pose = Poses.POSE_POHON
+        pose = Poses.ALL.first()
         durationMin = 1
         resultAccuracy = 0
     }

@@ -17,11 +17,14 @@ import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
  * Satu frame hasil deteksi Pose Landmarker: 33 landmark ternormalisasi (0..1) yang sudah
  * dirotasi ke orientasi tegak, plus dimensi gambar tegak — overlay di UI memetakannya ke
  * layar dengan transformasi FILL_CENTER (+ mirror untuk kamera depan).
+ * z/visibility/presence juga disimpan karena kelima fitur ini yang dipakai model GCN.
  */
 class PoseFrame(
     val xs: FloatArray,
     val ys: FloatArray,
+    val zs: FloatArray,
     val visibility: FloatArray,
+    val presence: FloatArray,
     val imageWidth: Int,
     val imageHeight: Int,
 ) {
@@ -54,7 +57,6 @@ val POSE_CONNECTIONS: List<Pair<Int, Int>> = listOf(
  * Pembungkus MediaPipe Pose Landmarker (model Full, LIVE_STREAM) untuk YogaMate.
  * Inference berjalan di thread internal MediaPipe (bukan main thread); hasil dikirim ke
  * main thread lewat callback [onFrame] — null berarti tidak ada tubuh terdeteksi.
- * Terpisah dari UI dan dari klasifikasi GCN (yang menyusul, section 9.10+).
  */
 class PoseEngine(private val onFrame: (PoseFrame?) -> Unit) {
 
@@ -64,7 +66,6 @@ class PoseEngine(private val onFrame: (PoseFrame?) -> Unit) {
     /** Inisialisasi detector. False bila tidak tersedia (mis. ABI tanpa lib native). */
     fun start(context: Context): Boolean {
         if (landmarker != null) return true
-        // GPU bila tersedia, fallback CPU.
         landmarker = try {
             create(
                 context,
@@ -100,7 +101,9 @@ class PoseEngine(private val onFrame: (PoseFrame?) -> Unit) {
                     PoseFrame(
                         xs = FloatArray(lm.size) { lm[it].x() },
                         ys = FloatArray(lm.size) { lm[it].y() },
+                        zs = FloatArray(lm.size) { lm[it].z() },
                         visibility = FloatArray(lm.size) { lm[it].visibility().orElse(1f) },
+                        presence = FloatArray(lm.size) { lm[it].presence().orElse(0f) },
                         imageWidth = input.width,
                         imageHeight = input.height,
                     )

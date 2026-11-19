@@ -1,10 +1,8 @@
 package com.viscit.yogamate.data
 
+import android.content.Context
 import java.util.Calendar
 import java.util.Locale
-
-// Model data minimal untuk UI; sumber data riwayat: penyimpanan lokal (lihat AppSession).
-// Belum ada kontrak API/ML di codebase — akurasi sesi disimulasikan (lihat plan.md).
 
 enum class Level(val label: String) {
     PEMULA("Pemula"), MENENGAH("Menengah"), LANJUTAN("Lanjutan")
@@ -16,6 +14,13 @@ data class Pose(
     val level: Level,
     val description: String,
     val steps: List<String>,
+    // Mapping label/class yang dipakai output classifier GCN; -1 untuk pose lama non-model.
+    val labelId: Int = -1,
+    val classIndex: Int = -1,
+    val classLabel: String = "",
+    val slug: String = "",
+    val linkImg: String = "",
+    val audio: String = "",
 )
 
 data class HistoryItem(
@@ -23,12 +28,12 @@ data class HistoryItem(
     val poseName: String,
     val level: Level,
     val dayOfMonth: Int,
-    val month: Int, // 1..12
+    val month: Int,
     val year: Int,
-    val timeLabel: String, // "07.30"
-    val dayLabel: String,  // "Hari ini" / "5 Okt"
+    val timeLabel: String,
+    val dayLabel: String,
     val minutes: Int,
-    val accuracy: Int,     // persen
+    val accuracy: Int,
 ) {
     val levelMinutesLabel: String get() = "${level.label}  ·  $minutes menit"
 }
@@ -47,25 +52,19 @@ data class Achievement(
 enum class AchievementIcon { SPROUT, FLOWER, FIRE, SPARKLE, HEART }
 
 object Poses {
-    // Pose Pohon lengkap sesuai Figma (112:4086). Pose lain konten minimal (Need Confirmation di plan.md).
-    val POSE_POHON = Pose(
-        name = "Pose Pohon",
-        sanskrit = "Vrksasana",
-        level = Level.PEMULA,
-        description = "Temukan keseimbanganmu, satu napas dalam satu waktu.",
-        steps = listOf(
-            "Berdiri tegak, pindahkan berat badan ke kaki kiri.",
-            "Letakkan telapak kaki kanan di betis atau paha kiri, bukan pada lutut.",
-            "Satukan telapak tangan di depan dada. Bernapas perlahan.",
-        ),
-    )
-    val ALL = listOf(
-        POSE_POHON,
-        Pose("Pose Gunung", "Tadasana", Level.PEMULA, "Berdiri tegak dengan tenang dan stabil.", listOf("Berdiri dengan tumit menyatu.", "Relaksasikan bahu, tarik napas.", "Tahan dengan nyaman.")),
-        Pose("Pose Anak", "Balasana", Level.PEMULA, "Jeda untuk kembali tenang.", listOf("Duduk di atas tumit.", "Condongkan badan ke depan.", "Tarik napas perlahan.")),
-        Pose("Pose Kucing", "Marjaryasana", Level.PEMULA, "Lenturkan punggung dengan lembut.", listOf("Posisi merangkak.", "Lengkungkan punggung ke atas dan bawah.", "Ikuti ritme napas.")),
-    )
-    fun random(): Pose = ALL.random()
+    // Satu-satunya sumber katalog: 15 pose dari CSV seed. Tidak ada fallback hardcode.
+    lateinit var ALL: List<Pose>
+        private set
+
+    /** Dipanggil dari AppSession.init, sebelum UI dibuat. Gagal keras bila seed tidak valid. */
+    fun loadFrom(context: Context) {
+        ALL = PoseSeedLoader.load(context)
+    }
+
+    fun random(level: Level? = null): Pose {
+        val pool = if (level == null) ALL else ALL.filter { it.level == level }.ifEmpty { ALL }
+        return pool.random()
+    }
 }
 
 object Achievements {
@@ -103,7 +102,6 @@ object TimeUtil {
     fun firstDayOfWeek(month: Int, year: Int): Int {
         val c = Calendar.getInstance()
         c.set(year, month - 1, 1)
-        // Senin=1..Minggu=7 sesuai desain (Sen..Min)
         return ((c.get(Calendar.DAY_OF_WEEK) + 5) % 7) + 1
     }
 

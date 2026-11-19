@@ -52,7 +52,6 @@ import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 
-// Tombol utama sesuai desain: pill #28086B, label DM Sans 600 16, ikon opsional di kanan.
 @Composable
 fun YmPrimaryButton(
     text: String,
@@ -85,7 +84,6 @@ fun YmPrimaryButton(
     }
 }
 
-// Tombol sekunder: outline tipis, teks ungu (dipakai "Masuk ke akun").
 @Composable
 fun YmSecondaryButton(
     text: String,
@@ -113,15 +111,12 @@ fun YmSecondaryButton(
 
 private val OutlineSofter = Color(0xFFEAE3EF)
 
-// Panah kanan untuk tombol utama (sesuai desain).
 @Composable
 fun ArrowForwardIcon(tint: Color = Color(0xFFFFFCF7)) {
     Spacer(Modifier.width(10.dp))
     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = tint, modifier = Modifier.size(20.dp))
 }
 
-// Header aplikasi: logo maskot+wordmark (aset asli Figma) + ikon profil kanan atas.
-// Profil bukan tab — hanya dibuka dari sini (ketentuan pengguna).
 @Composable
 fun AppHeader(onProfile: () -> Unit) {
     Row(
@@ -153,7 +148,6 @@ fun AppHeader(onProfile: () -> Unit) {
     }
 }
 
-// Baris judul seksi + aksi kanan ("Progres >", "Lihat semua >").
 @Composable
 fun SectionHeader(title: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
@@ -171,7 +165,6 @@ fun SectionHeader(title: String, actionLabel: String? = null, onAction: (() -> U
     }
 }
 
-// Top bar alur yoga: tombol back bulat, judul tengah, tombol X.
 @Composable
 fun YmTopBar(
     title: String,
@@ -211,7 +204,6 @@ fun YmTopBar(
     }
 }
 
-// Segmen progres 4 langkah setup yoga.
 @Composable
 fun ProgressSegments(activeCount: Int, total: Int = 4) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -227,7 +219,6 @@ fun ProgressSegments(activeCount: Int, total: Int = 4) {
     }
 }
 
-// Input teks: kartu putih radius 16 outline tipis, label di atas.
 @Composable
 fun YmTextField(
     label: String,
@@ -279,7 +270,6 @@ fun YmTextField(
     }
 }
 
-// Kartu riwayat latihan (Beranda "Latihan terakhir" & daftar Aktivitas) → buka Detail Riwayat.
 @Composable
 fun HistoryCard(item: HistoryItem, onClick: () -> Unit, showDate: Boolean = true) {
     Surface(

@@ -32,16 +32,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.viscit.yogamate.R
 import com.viscit.yogamate.data.HistoryItem
+import com.viscit.yogamate.data.Poses
+import com.viscit.yogamate.data.YogaSessionState
 import com.viscit.yogamate.ui.components.YmPrimaryButton
 import com.viscit.yogamate.ui.theme.Ink
 import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 
-// HISTORY-02 Detail Riwayat (Figma 108:3430): modal bottom sheet "Cerita latihanmu".
 @Composable
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-fun DetailSheet(item: HistoryItem, onDismiss: () -> Unit, onStartYoga: () -> Unit = onDismiss) {
+fun DetailSheet(item: HistoryItem, onDismiss: () -> Unit, onStartYoga: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color(0xFFFFFCF7)) {
         Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -86,7 +87,15 @@ fun DetailSheet(item: HistoryItem, onDismiss: () -> Unit, onStartYoga: () -> Uni
                 style = MaterialTheme.typography.bodyLarge, color = Muted, textAlign = TextAlign.Start,
             )
             Spacer(Modifier.height(20.dp))
-            YmPrimaryButton("Latihan lagi", onStartYoga, trailingIcon = { ArrowForwardIconWhite() })
+            YmPrimaryButton("Latihan lagi", onClick = {
+                Poses.ALL.firstOrNull { it.name == item.poseName }?.let { repeated ->
+                    YogaSessionState.pose = repeated
+                    YogaSessionState.level = item.level
+                    YogaSessionState.durationMin = item.minutes.coerceIn(1, 5)
+                    YogaSessionState.step = 3
+                }
+                onStartYoga()
+            }, trailingIcon = { ArrowForwardIconWhite() })
         }
     }
 }

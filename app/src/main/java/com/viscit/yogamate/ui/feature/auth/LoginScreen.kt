@@ -37,7 +37,6 @@ import com.viscit.yogamate.ui.theme.Ink
 import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Muted
 
-// AUTH-03 Login (Figma 98:752). UI-only: belum ada backend — kredensial tidak diverifikasi server.
 @Composable
 fun LoginScreen(onSuccess: () -> Unit, onRegister: () -> Unit) {
     var email by remember { mutableStateOf("") }
