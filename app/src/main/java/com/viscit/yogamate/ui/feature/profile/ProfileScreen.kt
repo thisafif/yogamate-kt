@@ -51,7 +51,6 @@ import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
 
-// PROFILE-01 Profil (Figma 104:2837): non-tab, dibuka dari ikon kanan atas 3 tab utama.
 @Composable
 fun ProfileScreen(onBack: () -> Unit, onEditProfile: () -> Unit, onOpenEducation: () -> Unit, onOpenHistory: () -> Unit, onOpenAchievement: () -> Unit) {
     var showGuide by remember { mutableStateOf(false) }
@@ -121,7 +120,6 @@ fun ProfileScreen(onBack: () -> Unit, onEditProfile: () -> Unit, onOpenEducation
         Spacer(Modifier.height(24.dp))
     }
 
-    // PROFILE-02 Panduan Singkat (108:3362): modal bottom sheet, bukan tab/route.
     if (showGuide) {
         GuideSheet(onDismiss = { showGuide = false })
     }

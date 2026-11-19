@@ -84,7 +84,6 @@ import com.viscit.yogamate.ui.theme.OutlineSoft
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-// YOGA-01..04 Mulai Yoga (Figma 112:3824/3943/4086/4213): satu route, 4 step internal (usulan plan §6.3).
 @Composable
 fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> Unit) {
     val step = YogaSessionState.step
@@ -94,7 +93,6 @@ fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> U
     DisposableEffect(Unit) {
         onDispose { if (!continuedToSession) YogaSessionState.reset() }
     }
-    // Gacha berputar: box ikut goyang + getar dulu (lihat StepGacha), baru pindah ke step pose.
     var gachaRolling by remember { mutableStateOf(false) }
     // Keluar dari step 2 (back/close) → matikan rolling agar tidak me-roll ulang saat kembali.
     LaunchedEffect(step) { if (step != 2) gachaRolling = false }
@@ -109,11 +107,14 @@ fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> U
         when (step) {
             1 -> StepLevel()
             2 -> StepGacha(gachaRolling, onRollDone = {
-                YogaSessionState.pose = Poses.random()
+                YogaSessionState.pose = Poses.random(YogaSessionState.level)
                 YogaSessionState.step = 3
                 gachaRolling = false
             })
-            3 -> StepPose()
+            3 -> StepPose(onReRoll = {
+                YogaSessionState.step = 2
+                gachaRolling = true
+            })
             else -> StepFour(onStartSession)
         }
         Spacer(Modifier.weight(1f))
@@ -186,8 +187,6 @@ private fun levelSubtitle(level: Level): String = when (level) {
     Level.LANJUTAN -> "Eksplorasi kekuatan dan keseimbangan."
 }
 
-// Gacha heboh: antisipasi mampat → goyang ±22° makin cepat (~2,7 detik) dengan getar makin kuat
-// → finale putaran penuh 360° + pop skala, lalu onRollDone() pindah ke step pose.
 @Composable
 private fun StepGacha(rolling: Boolean, onRollDone: () -> Unit) {
     val context = LocalContext.current
@@ -275,7 +274,7 @@ private fun StepGacha(rolling: Boolean, onRollDone: () -> Unit) {
 }
 
 @Composable
-private fun StepPose() {
+private fun StepPose(onReRoll: () -> Unit) {
     val pose = YogaSessionState.pose
     Text("03 · KENALI POSEMU", style = MaterialTheme.typography.labelSmall, color = Muted)
     Spacer(Modifier.height(12.dp))
@@ -308,7 +307,7 @@ private fun StepPose() {
             Text(pose.sanskrit, style = MaterialTheme.typography.bodyMedium, color = Muted)
         }
         Surface(
-            onClick = { YogaSessionState.pose = Poses.random() },
+            onClick = onReRoll,
             shape = CircleShape,
             color = Color.Transparent,
             border = androidx.compose.foundation.BorderStroke(1.dp, OutlineSoft),
@@ -334,8 +333,6 @@ private fun StepPose() {
         }
     }
 }
-
-// Step 4: durasi + persiapan ruang + tombol mulai (dari SetupScreen when).
 
 @Composable
 private fun StepFour(onStartSession: () -> Unit) {

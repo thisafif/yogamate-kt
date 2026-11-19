@@ -56,7 +56,6 @@ import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 import java.util.Calendar
 
-// HISTORY-01 Aktivitas / Riwayat (Figma 102:1763). Label tab: Aktivitas; desain: Riwayat.
 @Composable
 fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
     var detail by remember { mutableStateOf<HistoryItem?>(null) }
@@ -78,7 +77,6 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
         Text("Rutinitas Harianmu", style = MaterialTheme.typography.headlineLarge, color = Ink)
         Spacer(Modifier.height(16.dp))
 
-        // Ringkasan bulan
         Surface(shape = RoundedCornerShape(20.dp), color = androidx.compose.ui.graphics.Color.Transparent, border = androidx.compose.foundation.BorderStroke(1.dp, OutlineSoft)) {
             Row(Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
                 StatCell("${monthHistory.size}", "Sesi latihan", Modifier.weight(1f))
@@ -103,7 +101,6 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
         }
         Spacer(Modifier.height(12.dp))
 
-        // Kalender heatmap: intensitas latihan per hari
         val days = TimeUtil.daysInMonth(month, year)
         val firstOffset = TimeUtil.firstDayOfWeek(month, year) - 1
         val weekLabels = listOf("Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min")
@@ -161,7 +158,6 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
 
         SectionHeader("Riwayat latihan")
         Spacer(Modifier.height(12.dp))
-        // Filter level: chip dalam wadah lavendel, terpilih putih
         Surface(shape = RoundedCornerShape(50), color = LavenderLight) {
             Row(Modifier.padding(4.dp)) {
                 filters.forEach { f ->
@@ -182,7 +178,6 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
         Spacer(Modifier.height(16.dp))
 
         if (shown.isEmpty()) {
-            // Empty state sesuai desain (kartu lavendel + CTA)
             Surface(shape = RoundedCornerShape(24.dp), color = LavenderLight, modifier = Modifier.fillMaxWidth()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().padding(24.dp)) {
                     Icon(Icons.Default.LocalFlorist, null, tint = Ink, modifier = Modifier.size(32.dp))
@@ -201,7 +196,7 @@ fun ActivityScreen(onProfile: () -> Unit, onStartYoga: () -> Unit) {
         Spacer(Modifier.height(24.dp))
     }
 
-    detail?.let { DetailSheet(it, onDismiss = { detail = null }) }
+    detail?.let { DetailSheet(it, onDismiss = { detail = null }, onStartYoga = onStartYoga) }
 }
 
 @Composable

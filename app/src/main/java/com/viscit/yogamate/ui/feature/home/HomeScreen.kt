@@ -51,12 +51,10 @@ import com.viscit.yogamate.ui.theme.Muted
 import com.viscit.yogamate.ui.theme.OutlineSoft
 import java.util.Calendar
 
-// HOME-01 Beranda (Figma 102:1444). Ikon profil kanan atas membuka Profil (bukan tab).
 @Composable
 fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: () -> Unit, onOpenHistory: () -> Unit) {
     var detail by remember { mutableStateOf<HistoryItem?>(null) }
     val today = Calendar.getInstance().get(Calendar.DAY_OF_WEEK)
-    // Urutan label hari sesuai desain: S S R K J S M (Senin..Minggu)
     val dayLabels = listOf("S", "S", "R", "K", "J", "S", "M")
     val startOffset = (today + 6) % 7 // posisi hari ini dalam minggu Senin-pertama
     val week = remember(startOffset) {
@@ -83,7 +81,6 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: 
         Text("Waktunya kembali\nke dirimu.", style = MaterialTheme.typography.headlineLarge, color = Ink)
         Spacer(Modifier.height(16.dp))
 
-        // Kartu hero
         Surface(shape = RoundedCornerShape(24.dp), color = LavenderSoft, modifier = Modifier.fillMaxWidth()) {
             Column(Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.Top) {
@@ -102,7 +99,6 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: 
             }
         }
         Spacer(Modifier.height(24.dp))
-        // Banner pintasan ke modul Edukasi Kesehatan.
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = Color.White,
@@ -161,7 +157,6 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: 
         if (last != null) {
             HistoryCard(last, onClick = { detail = last })
         } else {
-            // Belum ada riwayat — desain memakai contoh data; tampilkan kartu contoh "Pose Pohon" (108:3430)
             HistoryCard(
                 HistoryItem(0, "Pose Pohon", com.viscit.yogamate.data.Level.PEMULA, 0, 0, 0, "07.30", "Hari ini", 3, 92),
                 onClick = { detail = HistoryItem(0, "Pose Pohon", com.viscit.yogamate.data.Level.PEMULA, 0, 0, 0, "07.30", "Hari ini", 3, 92) },
@@ -170,5 +165,5 @@ fun HomeScreen(onProfile: () -> Unit, onStartYoga: () -> Unit, onOpenEducation: 
         Spacer(Modifier.height(24.dp))
     }
 
-    detail?.let { DetailSheet(it, onDismiss = { detail = null }) }
+    detail?.let { DetailSheet(it, onDismiss = { detail = null }, onStartYoga = onStartYoga) }
 }

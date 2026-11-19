@@ -3,6 +3,7 @@ package com.viscit.yogamate.ui.feature.onboarding
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.viscit.yogamate.R
@@ -34,9 +36,10 @@ import com.viscit.yogamate.ui.theme.Lavender
 import com.viscit.yogamate.ui.theme.LavenderLight
 import com.viscit.yogamate.ui.theme.Muted
 
+private const val SWIPE_THRESHOLD = 80f
+
 private data class OnbPage(val mascot: Int, val caption: String, val heading: String, val body: String, val button: String)
 
-// Onboarding 1–3 (Figma 98:32, 98:122, 98:411): satu screen, 3 halaman state internal.
 private val PAGES = listOf(
     OnbPage(R.drawable.mascot_01_halo, "Halo! Aku Mate, teman yoga barumu.",
         "Gerak kecil.\nRasa lebih baik.",
@@ -53,9 +56,29 @@ private val PAGES = listOf(
 fun OnboardingScreen(onFinish: () -> Unit, onLogin: () -> Unit) {
     var page by remember { mutableIntStateOf(0) }
     val p = PAGES[page]
+
+    fun next() { if (page < PAGES.lastIndex) page++ else onFinish() }
+    fun previous() { if (page > 0) page-- }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+            .padding(horizontal = 24.dp)
+            .pointerInput(Unit) {
+                var totalDrag = 0f
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        when {
+                            totalDrag > SWIPE_THRESHOLD -> next()
+                            totalDrag < -SWIPE_THRESHOLD -> previous()
+                        }
+                        totalDrag = 0f
+                    },
+                    onDragCancel = { totalDrag = 0f },
+                ) { _, dragAmount -> totalDrag += dragAmount }
+            },
     ) {
         Spacer(Modifier.weight(0.6f))
         Box(contentAlignment = Alignment.Center) {
@@ -84,7 +107,7 @@ fun OnboardingScreen(onFinish: () -> Unit, onLogin: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Text(p.body, style = MaterialTheme.typography.bodyMedium, color = Muted)
             Spacer(Modifier.height(24.dp))
-            YmPrimaryButton(p.button, onClick = { if (page < 2) page++ else onFinish() })
+            YmPrimaryButton(p.button, onClick = { next() })
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
                 Text("Sudah punya akun? ", style = MaterialTheme.typography.bodyMedium, color = Muted)
