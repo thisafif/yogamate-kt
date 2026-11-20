@@ -24,6 +24,7 @@ object AppSession {
     private val db by lazy { FirebaseFirestore.getInstance() }
     private var profileListener: ListenerRegistration? = null
     private var historyListener: ListenerRegistration? = null
+    private var achievementListener: ListenerRegistration? = null
     private var authListener: FirebaseAuth.AuthStateListener? = null
 
     var onboardingDone by mutableStateOf(false)
@@ -37,6 +38,8 @@ object AppSession {
     var userGoal by mutableStateOf("Lebih fleksibel")
         private set
     var history by mutableStateOf<List<HistoryItem>>(emptyList())
+        private set
+    var achievements by mutableStateOf(Achievements.compute(emptyList()))
         private set
 
     fun init(context: Context) {
@@ -55,6 +58,7 @@ object AppSession {
                 userEmail = ""
                 userGoal = "Lebih fleksibel"
                 history = emptyList()
+                achievements = Achievements.compute(emptyList())
                 prefs.edit().remove("history").apply()
             } else {
                 userEmail = user.email.orEmpty()
@@ -70,6 +74,7 @@ object AppSession {
     private fun detachCloudListeners() {
         profileListener?.remove(); profileListener = null
         historyListener?.remove(); historyListener = null
+        achievementListener?.remove(); achievementListener = null
     }
 
     private fun attachCloudListeners(user: FirebaseUser) {
@@ -91,7 +96,40 @@ object AppSession {
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { Log.w(TAG, "History listener failed", error); return@addSnapshotListener }
                 history = snapshot?.documents.orEmpty().mapNotNull(::historyFromDocument)
+                val calculated = Achievements.compute(history)
+                achievements = calculated
+                persistAchievements(user, calculated)
             }
+        achievementListener = ref.collection("achievements").addSnapshotListener { snapshot, error ->
+            if (error != null) { Log.w(TAG, "Achievement listener failed", error); return@addSnapshotListener }
+            val saved = snapshot?.documents.orEmpty().associateBy { it.id }
+            achievements = Achievements.compute(history).map { calculated ->
+                val doc = saved[calculated.code] ?: return@map calculated
+                calculated.copy(
+                    progress = (doc.getLong("progress") ?: calculated.progress.toLong()).toInt(),
+                    target = (doc.getLong("target") ?: calculated.target.toLong()).toInt(),
+                )
+            }
+        }
+    }
+
+    private fun persistAchievements(user: FirebaseUser, items: List<Achievement>) {
+        val batch = db.batch()
+        val collection = userRef(user).collection("achievements")
+        items.forEach { item ->
+            batch.set(collection.document(item.code), mapOf(
+                "code" to item.code,
+                "title" to item.title,
+                "subtitle" to item.subtitle,
+                "icon" to item.icon.name,
+                "progress" to item.progress,
+                "target" to item.target,
+                "unit" to item.unit,
+                "achieved" to item.achieved,
+                "updatedAt" to System.currentTimeMillis(),
+            ), SetOptions.merge())
+        }
+        batch.commit().addOnFailureListener { Log.w(TAG, "Achievement sync failed", it) }
     }
 
     private fun historyFromDocument(doc: DocumentSnapshot): HistoryItem? {
@@ -185,6 +223,7 @@ object AppSession {
             "createdAt" to item.id,
         )
         userRef(user).collection("history").document(item.id.toString()).set(data)
+            .addOnSuccessListener { persistAchievements(user, Achievements.compute(history)) }
             .addOnFailureListener { Log.w(TAG, "History sync failed", it) }
     }
 

@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.kel9.yogamate.R
 import com.kel9.yogamate.data.AchievementIcon
 import com.kel9.yogamate.data.AppSession
-import com.kel9.yogamate.data.Achievements
 import com.kel9.yogamate.ui.components.AppHeader
 import com.kel9.yogamate.ui.theme.Ink
 import com.kel9.yogamate.ui.theme.LavenderLight
@@ -52,7 +51,7 @@ import com.kel9.yogamate.ui.theme.OutlineSoft
 // ACH-01 Pencapaian (Figma 102:2295). Ikon profil kanan atas, bukan tab.
 @Composable
 fun AchievementScreen(onProfile: () -> Unit, onOpenHistory: () -> Unit) {
-    val achievements = Achievements.compute(AppSession.history)
+    val achievements = AppSession.achievements
     val earned = achievements.count { it.achieved }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {

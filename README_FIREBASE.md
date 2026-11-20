@@ -38,7 +38,7 @@ Di Firebase Console, data profil muncul di `users/{UID}` dan riwayat di subcolle
 - Authentication email/password: Firebase Auth.
 - Profil: `users/{uid}` dengan `name`, `email`, `goal`.
 - Riwayat: `users/{uid}/history/{entryId}`.
-- Achievement saat ini dihitung dari riwayat latihan oleh aplikasi.
+- Progres achievement dihitung dari riwayat lalu disimpan per akun di `users/{uid}/achievements/{code}`.
 - Data empat pose dan konten edukasi masih ditanam di aplikasi. Data tersebut belum dikelola dari Firestore.
 - Akurasi hasil latihan di layar saat ini masih simulasi; MediaPipe yang ada mendeteksi landmark, bukan mengklasifikasikan pose ke 15 class index.
 

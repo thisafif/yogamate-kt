@@ -1,8 +1,10 @@
 package com.kel9.yogamate.ui.navigation
 
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -153,14 +155,36 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
             navController = nav,
             startDestination = start,
             modifier = Modifier.weight(1f),
-            // pindah halaman tanpa animasi.
-            // snap() (bukan EnterTransition.None) supaya transisi selesai di frame pertama
-            // dan layar lama langsung dibuang — None masih menampilkan overlap 1-6 frame
-            // (AnimatedContent di Navigation Compose, lihat issuetracker 550924680).
-            enterTransition = { fadeIn(snap()) },
-            exitTransition = { fadeOut(snap()) },
-            popEnterTransition = { fadeIn(snap()) },
-            popExitTransition = { fadeOut(snap()) },
+            // Geser singkat tanpa fade untuk halaman biasa. Layar sesi tanpa
+            // transisi agar animasi kamera dan pose tidak ikut tersendat.
+            enterTransition = {
+                if (initialState.destination.route == Routes.YOGA_SESSION || targetState.destination.route == Routes.YOGA_SESSION) {
+                    EnterTransition.None
+                } else {
+                    slideInHorizontally(initialOffsetX = { it / 5 }, animationSpec = tween(180))
+                }
+            },
+            exitTransition = {
+                if (initialState.destination.route == Routes.YOGA_SESSION || targetState.destination.route == Routes.YOGA_SESSION) {
+                    ExitTransition.None
+                } else {
+                    slideOutHorizontally(targetOffsetX = { -it / 10 }, animationSpec = tween(180))
+                }
+            },
+            popEnterTransition = {
+                if (initialState.destination.route == Routes.YOGA_SESSION || targetState.destination.route == Routes.YOGA_SESSION) {
+                    EnterTransition.None
+                } else {
+                    slideInHorizontally(initialOffsetX = { -it / 10 }, animationSpec = tween(180))
+                }
+            },
+            popExitTransition = {
+                if (initialState.destination.route == Routes.YOGA_SESSION || targetState.destination.route == Routes.YOGA_SESSION) {
+                    ExitTransition.None
+                } else {
+                    slideOutHorizontally(targetOffsetX = { it / 5 }, animationSpec = tween(180))
+                }
+            },
         ) {
             composable(Routes.ONBOARDING) { OnboardingScreen(
                 onFinish = {
