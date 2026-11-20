@@ -21,3 +21,7 @@
 # valid. Shrinking & obfuscation tetap berjalan — penghematan ikon extended
 # tidak hilang.
 -dontoptimize
+
+# Suppress warnings for missing javax.lang.model annotation processing classes referenced by dependencies
+-dontwarn javax.lang.model.**
+

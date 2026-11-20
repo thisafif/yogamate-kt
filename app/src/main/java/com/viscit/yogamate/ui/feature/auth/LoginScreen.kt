@@ -42,6 +42,7 @@ fun LoginScreen(onSuccess: () -> Unit, onRegister: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var submitting by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp),
@@ -75,9 +76,15 @@ fun LoginScreen(onSuccess: () -> Unit, onRegister: () -> Unit) {
             when {
                 !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> error = "Format email belum benar."
                 password.length < 8 -> error = "Gunakan setidaknya 8 karakter."
-                else -> { AppSession.login(email.substringBefore("@"), email, password); onSuccess() }
+                else -> {
+                    submitting = true
+                    AppSession.login(email.trim(), password) { authError ->
+                        submitting = false
+                        if (authError == null) onSuccess() else error = authError
+                    }
+                }
             }
-        }, trailingIcon = { ArrowForwardIcon() })
+        }, enabled = !submitting, trailingIcon = { ArrowForwardIcon() })
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             Text("Belum punya akun? ", style = MaterialTheme.typography.bodyMedium, color = Muted)

@@ -56,6 +56,7 @@ fun EditProfileScreen(onBack: () -> Unit) {
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var submitting by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {
         Spacer(Modifier.height(8.dp))
@@ -140,12 +141,15 @@ fun EditProfileScreen(onBack: () -> Unit) {
                     newPassword.isNotEmpty() && confirmPassword != newPassword ->
                         error = "Konfirmasi kata sandi belum sama."
                     else -> {
-                        AppSession.updateProfile(name.trim(), goal, email.trim(), newPassword.ifBlank { null })
-                        onBack()
+                        submitting = true
+                        AppSession.updateProfile(name.trim(), goal, email.trim(), newPassword.ifBlank { null }) { profileError ->
+                            submitting = false
+                            if (profileError == null) onBack() else error = profileError
+                        }
                     }
                 }
             },
-            enabled = name.trim().isNotBlank(),
+            enabled = name.trim().isNotBlank() && !submitting,
         )
         Spacer(Modifier.height(24.dp))
     }

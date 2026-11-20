@@ -1,0 +1,107 @@
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:tools=\"http://schemas.android.com/tools\">\r\n\r\n    <uses-permission android:name=\"android.permission.CAMERA\" />\r\n    <uses-permission android:name=\"android.permission.VIBRATE\" />\r\n    <uses-feature android:name=\"android.hardware.camera\" android:required=\"false\" />\r\n\r\n    <application\r\n        android:allowBackup=\"true\"\r\n        android:dataExtractionRules=\"@xml/data_extraction_rules\"\r\n        android:fullBackupContent=\"@xml/backup_rules\"\r\n        android:icon=\"@mipmap/ic_launcher\"\r\n        android:label=\"@string/app_name\"\r\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\r\n        android:supportsRtl=\"true\"\r\n        android:theme=\"@style/Theme.Yogamate\">\r\n        <activity\r\n            android:name=\".MainActivity\"\r\n            android:exported=\"true\"\r\n            android:label=\"@string/app_name\"\r\n            android:theme=\"@style/Theme.Yogamate\"\r\n            android:windowSoftInputMode=\"adjustResize\">\r\n            <intent-filter>\r\n                <action android:name=\"android.intent.action.MAIN\" />\r\n\r\n                <category android:name=\"android.intent.category.LAUNCHER\" />\r\n            </intent-filter>\r\n        </activity>\r\n    </application>\r\n\r\n</manifest>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision 71bd9198e097db7dade09b1eed0171655b7a7e46)
++++ b/app/src/main/AndroidManifest.xml	(date 1795166105930)
+@@ -3,6 +3,7 @@
+     xmlns:tools="http://schemas.android.com/tools">
+ 
+     <uses-permission android:name="android.permission.CAMERA" />
++    <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.VIBRATE" />
+     <uses-feature android:name="android.hardware.camera" android:required="false" />
+ 
+@@ -29,4 +30,4 @@
+         </activity>
+     </application>
+ 
+-</manifest>
+\ No newline at end of file
++</manifest>
+Index: app/src/main/java/com/viscit/yogamate/ui/components/Components.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.viscit.yogamate.ui.components\r\n\r\nimport androidx.compose.foundation.BorderStroke\r\nimport androidx.compose.foundation.Image\r\nimport androidx.compose.foundation.background\r\nimport androidx.compose.foundation.border\r\nimport androidx.compose.foundation.clickable\r\nimport androidx.compose.foundation.layout.Arrangement\r\nimport androidx.compose.foundation.layout.Box\r\nimport androidx.compose.foundation.layout.Column\r\nimport androidx.compose.foundation.layout.Row\r\nimport androidx.compose.foundation.layout.Spacer\r\nimport androidx.compose.foundation.layout.fillMaxWidth\r\nimport androidx.compose.foundation.layout.height\r\nimport androidx.compose.foundation.layout.padding\r\nimport androidx.compose.foundation.layout.size\r\nimport androidx.compose.foundation.layout.width\r\nimport androidx.compose.foundation.shape.CircleShape\r\nimport androidx.compose.foundation.shape.RoundedCornerShape\r\nimport androidx.compose.foundation.text.BasicTextField\r\nimport androidx.compose.material.icons.Icons\r\nimport androidx.compose.material.icons.automirrored.filled.ArrowBack\r\nimport androidx.compose.material.icons.automirrored.filled.ArrowForward\r\nimport androidx.compose.material.icons.filled.Close\r\nimport androidx.compose.material.icons.filled.Person\r\nimport androidx.compose.material.icons.filled.Visibility\r\nimport androidx.compose.material.icons.filled.VisibilityOff\r\nimport androidx.compose.material3.Icon\r\nimport androidx.compose.material3.IconButton\r\nimport androidx.compose.material3.MaterialTheme\r\nimport androidx.compose.material3.Surface\r\nimport androidx.compose.material3.Text\r\nimport androidx.compose.runtime.Composable\r\nimport androidx.compose.runtime.getValue\r\nimport androidx.compose.runtime.mutableStateOf\r\nimport androidx.compose.runtime.remember\r\nimport androidx.compose.runtime.setValue\r\nimport androidx.compose.ui.Alignment\r\nimport androidx.compose.ui.Modifier\r\nimport androidx.compose.ui.draw.clip\r\nimport androidx.compose.ui.graphics.Color\r\nimport androidx.compose.ui.graphics.ColorFilter\r\nimport androidx.compose.ui.res.painterResource\r\nimport androidx.compose.ui.text.input.PasswordVisualTransformation\r\nimport androidx.compose.ui.text.input.VisualTransformation\r\nimport androidx.compose.ui.unit.dp\r\nimport com.viscit.yogamate.R\r\nimport com.viscit.yogamate.data.HistoryItem\r\nimport com.viscit.yogamate.ui.theme.Ink\r\nimport com.viscit.yogamate.ui.theme.LavenderLight\r\nimport com.viscit.yogamate.ui.theme.Lime\r\nimport com.viscit.yogamate.ui.theme.Muted\r\nimport com.viscit.yogamate.ui.theme.OutlineSoft\r\n\r\n// Tombol utama sesuai desain: pill #28086B, label DM Sans 600 16, ikon opsional di kanan.\r\n@Composable\r\nfun YmPrimaryButton(\r\n    text: String,\r\n    onClick: () -> Unit,\r\n    modifier: Modifier = Modifier,\r\n    enabled: Boolean = true,\r\n    container: Color = Ink,\r\n    contentColor: Color = Color(0xFFFFFCF7),\r\n    leadingIcon: @Composable (() -> Unit)? = null,\r\n    trailingIcon: @Composable (() -> Unit)? = null,\r\n) {\r\n    Surface(\r\n        onClick = onClick,\r\n        enabled = enabled,\r\n        shape = RoundedCornerShape(16.dp),\r\n        color = if (enabled) container else container.copy(alpha = 0.4f),\r\n        contentColor = contentColor,\r\n        modifier = modifier.fillMaxWidth().height(56.dp),\r\n    ) {\r\n        Row(\r\n            verticalAlignment = Alignment.CenterVertically,\r\n            horizontalArrangement = Arrangement.Center,\r\n            modifier = Modifier.padding(horizontal = 20.dp),\r\n        ) {\r\n            leadingIcon?.invoke()\r\n            Spacer(Modifier.width(if (leadingIcon != null) 10.dp else 0.dp))\r\n            Text(text, style = MaterialTheme.typography.labelLarge)\r\n            trailingIcon?.invoke()\r\n        }\r\n    }\r\n}\r\n\r\n// Tombol sekunder: outline tipis, teks ungu (dipakai \"Masuk ke akun\").\r\n@Composable\r\nfun YmSecondaryButton(\r\n    text: String,\r\n    onClick: () -> Unit,\r\n    modifier: Modifier = Modifier,\r\n    trailingIcon: @Composable (() -> Unit)? = null,\r\n) {\r\n    Surface(\r\n        onClick = onClick,\r\n        shape = RoundedCornerShape(16.dp),\r\n        color = Color.Transparent,\r\n        border = BorderStroke(1.dp, OutlineSofter),\r\n        contentColor = Ink,\r\n        modifier = modifier.fillMaxWidth().height(56.dp),\r\n    ) {\r\n        Row(\r\n            verticalAlignment = Alignment.CenterVertically,\r\n            horizontalArrangement = Arrangement.Center,\r\n        ) {\r\n            Text(text, style = MaterialTheme.typography.labelLarge)\r\n            trailingIcon?.invoke()\r\n        }\r\n    }\r\n}\r\n\r\nprivate val OutlineSofter = Color(0xFFEAE3EF)\r\n\r\n// Panah kanan untuk tombol utama (sesuai desain).\r\n@Composable\r\nfun ArrowForwardIcon(tint: Color = Color(0xFFFFFCF7)) {\r\n    Spacer(Modifier.width(10.dp))\r\n    Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = tint, modifier = Modifier.size(20.dp))\r\n}\r\n\r\n// Header aplikasi: logo maskot+wordmark (aset asli Figma) + ikon profil kanan atas.\r\n// Profil bukan tab — hanya dibuka dari sini (ketentuan pengguna).\r\n@Composable\r\nfun AppHeader(onProfile: () -> Unit) {\r\n    Row(\r\n        verticalAlignment = Alignment.CenterVertically,\r\n        modifier = Modifier.fillMaxWidth(),\r\n    ) {\r\n        Image(\r\n            painter = painterResource(R.drawable.logo_yogamate),\r\n            contentDescription = \"yogamate\",\r\n            modifier = Modifier.height(56.dp),\r\n        )\r\n        Spacer(Modifier.weight(1f))\r\n        Surface(\r\n            onClick = onProfile,\r\n            shape = CircleShape,\r\n            color = Color.Transparent,\r\n            border = BorderStroke(1.dp, OutlineSofter),\r\n            modifier = Modifier.size(52.dp),\r\n        ) {\r\n            Box(contentAlignment = Alignment.Center) {\r\n                Icon(\r\n                    Icons.Default.Person,\r\n                    contentDescription = \"Profil\",\r\n                    tint = Ink,\r\n                    modifier = Modifier.size(24.dp),\r\n                )\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// Baris judul seksi + aksi kanan (\"Progres >\", \"Lihat semua >\").\r\n@Composable\r\nfun SectionHeader(title: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {\r\n    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {\r\n        Text(title, style = MaterialTheme.typography.titleLarge, color = Ink)\r\n        Spacer(Modifier.weight(1f))\r\n        if (actionLabel != null && onAction != null) {\r\n            Row(\r\n                verticalAlignment = Alignment.CenterVertically,\r\n                modifier = Modifier.clickable(onClick = onAction).padding(4.dp),\r\n            ) {\r\n                Text(actionLabel, style = MaterialTheme.typography.bodyMedium, color = Ink)\r\n                Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = Ink, modifier = Modifier.size(16.dp))\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// Top bar alur yoga: tombol back bulat, judul tengah, tombol X.\r\n@Composable\r\nfun YmTopBar(\r\n    title: String,\r\n    onBack: (() -> Unit)?,\r\n    onClose: (() -> Unit)?,\r\n) {\r\n    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {\r\n        if (onBack != null) {\r\n            Surface(\r\n                onClick = onBack,\r\n                shape = CircleShape,\r\n                color = Color.Transparent,\r\n                border = BorderStroke(1.dp, OutlineSofter),\r\n                modifier = Modifier.size(48.dp),\r\n            ) {\r\n                Box(contentAlignment = Alignment.Center) {\r\n                    Icon(Icons.AutoMirrored.Filled.ArrowBack, \"Kembali\", tint = Ink, modifier = Modifier.size(22.dp))\r\n                }\r\n            }\r\n        } else {\r\n            Spacer(Modifier.size(48.dp))\r\n        }\r\n        Text(\r\n            title,\r\n            style = MaterialTheme.typography.titleMedium,\r\n            color = Ink,\r\n            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),\r\n            textAlign = androidx.compose.ui.text.style.TextAlign.Center,\r\n        )\r\n        if (onClose != null) {\r\n            IconButton(onClick = onClose) {\r\n                Icon(Icons.Default.Close, \"Tutup\", tint = Ink, modifier = Modifier.size(24.dp))\r\n            }\r\n        } else {\r\n            Spacer(Modifier.size(48.dp))\r\n        }\r\n    }\r\n}\r\n\r\n// Segmen progres 4 langkah setup yoga.\r\n@Composable\r\nfun ProgressSegments(activeCount: Int, total: Int = 4) {\r\n    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {\r\n        repeat(total) { i ->\r\n            Box(\r\n                Modifier\r\n                    .weight(1f)\r\n                    .height(6.dp)\r\n                    .clip(RoundedCornerShape(3.dp))\r\n                    .background(if (i < activeCount) Ink else OutlineSoft)\r\n            )\r\n        }\r\n    }\r\n}\r\n\r\n// Input teks: kartu putih radius 16 outline tipis, label di atas.\r\n@Composable\r\nfun YmTextField(\r\n    label: String,\r\n    value: String,\r\n    onValueChange: (String) -> Unit,\r\n    hint: String,\r\n    modifier: Modifier = Modifier,\r\n    isPassword: Boolean = false,\r\n    supportingText: String? = null,\r\n) {\r\n    var showPassword by remember { mutableStateOf(false) }\r\n    Column(modifier) {\r\n        Text(label, style = MaterialTheme.typography.titleMedium, color = Ink)\r\n        Spacer(Modifier.height(8.dp))\r\n        BasicTextField(\r\n            value = value,\r\n            onValueChange = onValueChange,\r\n            singleLine = true,\r\n            textStyle = MaterialTheme.typography.bodyLarge.copy(color = Ink),\r\n            visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,\r\n            decorationBox = { inner ->\r\n                Row(\r\n                    verticalAlignment = Alignment.CenterVertically,\r\n                    modifier = Modifier\r\n                        .fillMaxWidth()\r\n                        .background(Color.White, RoundedCornerShape(16.dp))\r\n                        .border(1.dp, OutlineSoft, RoundedCornerShape(16.dp))\r\n                        .padding(horizontal = 16.dp, vertical = 16.dp),\r\n                ) {\r\n                    Box(Modifier.weight(1f)) {\r\n                        if (value.isEmpty()) Text(hint, style = MaterialTheme.typography.bodyLarge, color = Muted.copy(alpha = 0.6f))\r\n                        inner()\r\n                    }\r\n                    if (isPassword) {\r\n                        IconButton(onClick = { showPassword = !showPassword }, modifier = Modifier.size(24.dp)) {\r\n                            Icon(\r\n                                if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,\r\n                                null, tint = Ink, modifier = Modifier.size(22.dp),\r\n                            )\r\n                        }\r\n                    }\r\n                }\r\n            },\r\n        )\r\n        if (supportingText != null) {\r\n            Spacer(Modifier.height(6.dp))\r\n            Text(supportingText, style = MaterialTheme.typography.bodyMedium, color = Muted)\r\n        }\r\n    }\r\n}\r\n\r\n// Kartu riwayat latihan (Beranda \"Latihan terakhir\" & daftar Aktivitas) → buka Detail Riwayat.\r\n@Composable\r\nfun HistoryCard(item: HistoryItem, onClick: () -> Unit, showDate: Boolean = true) {\r\n    Surface(\r\n        onClick = onClick,\r\n        shape = RoundedCornerShape(20.dp),\r\n        color = Color.White,\r\n        border = BorderStroke(1.dp, OutlineSoft),\r\n        modifier = Modifier.fillMaxWidth(),\r\n    ) {\r\n        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(12.dp)) {\r\n            Surface(shape = RoundedCornerShape(14.dp), color = LavenderLight, modifier = Modifier.size(64.dp)) {\r\n                Image(painterResource(R.drawable.ilustrasi_pose), null, Modifier.padding(6.dp))\r\n            }\r\n            Spacer(Modifier.width(12.dp))\r\n            Column(Modifier.weight(1f)) {\r\n                Text(item.poseName, style = MaterialTheme.typography.titleMedium, color = Ink)\r\n                Text(\"${item.level.label}  ·  ${item.minutes} menit\", style = MaterialTheme.typography.bodyMedium, color = Muted)\r\n                if (showDate) Text(\"${item.dayLabel}, ${item.timeLabel}\", style = MaterialTheme.typography.bodySmall, color = Muted)\r\n            }\r\n            Column(horizontalAlignment = Alignment.CenterHorizontally) {\r\n                Surface(shape = RoundedCornerShape(50), color = Lime) {\r\n                    Text(\r\n                        \"${item.accuracy}%\",\r\n                        style = MaterialTheme.typography.labelMedium,\r\n                        color = Ink,\r\n                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),\r\n                    )\r\n                }\r\n                Text(\"Akurasi\", style = MaterialTheme.typography.bodySmall, color = Muted)\r\n            }\r\n        }\r\n    }\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/viscit/yogamate/ui/components/Components.kt b/app/src/main/java/com/viscit/yogamate/ui/components/Components.kt
+--- a/app/src/main/java/com/viscit/yogamate/ui/components/Components.kt	(revision 71bd9198e097db7dade09b1eed0171655b7a7e46)
++++ b/app/src/main/java/com/viscit/yogamate/ui/components/Components.kt	(date 1795178261579)
+@@ -52,7 +52,6 @@
+ import com.viscit.yogamate.ui.theme.Muted
+ import com.viscit.yogamate.ui.theme.OutlineSoft
+ 
+-// Tombol utama sesuai desain: pill #28086B, label DM Sans 600 16, ikon opsional di kanan.
+ @Composable
+ fun YmPrimaryButton(
+     text: String,
+@@ -85,7 +84,6 @@
+     }
+ }
+ 
+-// Tombol sekunder: outline tipis, teks ungu (dipakai "Masuk ke akun").
+ @Composable
+ fun YmSecondaryButton(
+     text: String,
+@@ -113,15 +111,12 @@
+ 
+ private val OutlineSofter = Color(0xFFEAE3EF)
+ 
+-// Panah kanan untuk tombol utama (sesuai desain).
+ @Composable
+ fun ArrowForwardIcon(tint: Color = Color(0xFFFFFCF7)) {
+     Spacer(Modifier.width(10.dp))
+     Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = tint, modifier = Modifier.size(20.dp))
+ }
+ 
+-// Header aplikasi: logo maskot+wordmark (aset asli Figma) + ikon profil kanan atas.
+-// Profil bukan tab — hanya dibuka dari sini (ketentuan pengguna).
+ @Composable
+ fun AppHeader(onProfile: () -> Unit) {
+     Row(
+@@ -153,7 +148,6 @@
+     }
+ }
+ 
+-// Baris judul seksi + aksi kanan ("Progres >", "Lihat semua >").
+ @Composable
+ fun SectionHeader(title: String, actionLabel: String? = null, onAction: (() -> Unit)? = null) {
+     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+@@ -171,7 +165,6 @@
+     }
+ }
+ 
+-// Top bar alur yoga: tombol back bulat, judul tengah, tombol X.
+ @Composable
+ fun YmTopBar(
+     title: String,
+@@ -211,7 +204,6 @@
+     }
+ }
+ 
+-// Segmen progres 4 langkah setup yoga.
+ @Composable
+ fun ProgressSegments(activeCount: Int, total: Int = 4) {
+     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+@@ -227,7 +219,6 @@
+     }
+ }
+ 
+-// Input teks: kartu putih radius 16 outline tipis, label di atas.
+ @Composable
+ fun YmTextField(
+     label: String,
+@@ -279,7 +270,6 @@
+     }
+ }
+ 
+-// Kartu riwayat latihan (Beranda "Latihan terakhir" & daftar Aktivitas) → buka Detail Riwayat.
+ @Composable
+ fun HistoryCard(item: HistoryItem, onClick: () -> Unit, showDate: Boolean = true) {
+     Surface(
