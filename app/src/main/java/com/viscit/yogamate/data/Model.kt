@@ -39,6 +39,7 @@ data class HistoryItem(
 }
 
 data class Achievement(
+    val code: String,
     val title: String,
     val subtitle: String,
     val icon: AchievementIcon,
@@ -73,11 +74,11 @@ object Achievements {
         val poses = history.map { it.poseName }.distinct().size
         val minutes = history.sumOf { it.minutes }
         return listOf(
-            Achievement("Langkah Pertama", "Selesaikan latihan pertamamu", AchievementIcon.SPROUT, sessions, 1, "sesi"),
-            Achievement("Mulai Mengalir", "Selesaikan 3 sesi latihan", AchievementIcon.FLOWER, sessions, 3, "sesi"),
-            Achievement("Yoga Jadi Kebiasaan", "Selesaikan 7 sesi latihan", AchievementIcon.FIRE, sessions, 7, "sesi"),
-            Achievement("Penjelajah Pose", "Coba 10 pose yang berbeda", AchievementIcon.SPARKLE, poses, 10, "pose"),
-            Achievement("Waktu untuk Diri", "Berlatih selama 60 menit", AchievementIcon.HEART, minutes, 60, "menit"),
+            Achievement("first_session", "Langkah Pertama", "Selesaikan latihan pertamamu", AchievementIcon.SPROUT, sessions, 1, "sesi"),
+            Achievement("three_sessions", "Mulai Mengalir", "Selesaikan 3 sesi latihan", AchievementIcon.FLOWER, sessions, 3, "sesi"),
+            Achievement("seven_sessions", "Yoga Jadi Kebiasaan", "Selesaikan 7 sesi latihan", AchievementIcon.FIRE, sessions, 7, "sesi"),
+            Achievement("ten_poses", "Penjelajah Pose", "Coba 10 pose yang berbeda", AchievementIcon.SPARKLE, poses, 10, "pose"),
+            Achievement("sixty_minutes", "Waktu untuk Diri", "Berlatih selama 60 menit", AchievementIcon.HEART, minutes, 60, "menit"),
         )
     }
 }

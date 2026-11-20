@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if owns(userId);
+      allow create, update: if owns(userId)
+        && request.resource.data.keys().hasOnly(['name', 'email', 'goal', 'createdAt'])
+        && request.resource.data.keys().hasAll(['name', 'email', 'goal'])
+        && request.resource.data.name is string
+        && request.resource.data.email is string
+        && request.resource.data.goal is string;
+      allow delete: if false;
+
+      match /history/{entryId} {
+        allow read: if owns(userId);
+        allow create: if owns(userId)
+          && request.resource.data.keys().hasOnly([
+            'id', 'poseName', 'level', 'dayOfMonth', 'month', 'year',
+            'timeLabel', 'dayLabel', 'minutes', 'accuracy', 'createdAt'
+          ])
+          && request.resource.data.keys().hasAll([
+            'id', 'poseName', 'level', 'dayOfMonth', 'month', 'year',
+            'timeLabel', 'dayLabel', 'minutes', 'accuracy', 'createdAt'
+          ])
+          && request.resource.data.id is int
+          && request.resource.data.poseName is string
+          && request.resource.data.level in ['PEMULA', 'MENENGAH', 'LANJUTAN']
+          && request.resource.data.dayOfMonth is int
+          && request.resource.data.month is int
+          && request.resource.data.year is int
+          && request.resource.data.timeLabel is string
+          && request.resource.data.dayLabel is string
+          && request.resource.data.minutes is int
+          && request.resource.data.minutes >= 0
+          && request.resource.data.accuracy is int
+          && request.resource.data.accuracy >= 0
+          && request.resource.data.accuracy <= 100
+          && request.resource.data.createdAt is int;
+        allow update, delete: if false;
+      }
+
+      match /achievements/{achievementId} {
+        allow read: if owns(userId);
+        allow create, update: if owns(userId)
+          && achievementId in ['first_session', 'three_sessions', 'seven_sessions', 'ten_poses', 'sixty_minutes']
+          && request.resource.data.keys().hasOnly([
+            'code', 'title', 'subtitle', 'icon', 'progress', 'target', 'unit', 'achieved', 'updatedAt'
+          ])
+          && request.resource.data.keys().hasAll([
+            'code', 'title', 'subtitle', 'icon', 'progress', 'target', 'unit', 'achieved', 'updatedAt'
+          ])
+          && request.resource.data.code == achievementId
+          && request.resource.data.title is string
+          && request.resource.data.subtitle is string
+          && request.resource.data.icon is string
+          && request.resource.data.progress is int
+          && request.resource.data.progress >= 0
+          && request.resource.data.target is int
+          && request.resource.data.target > 0
+          && request.resource.data.unit is string
+          && request.resource.data.achieved is bool
+          && request.resource.data.updatedAt is int;
+        allow delete: if false;
+      }
+    }
+
+    match /poses/{poseId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /education/{contentId} {
+      allow read: if resource.data.isPublished == true;
+      allow write: if false;
+    }
+
+    match /achievements/{achievementId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.viscit.yogamate.R
 import com.viscit.yogamate.data.AchievementIcon
 import com.viscit.yogamate.data.AppSession
-import com.viscit.yogamate.data.Achievements
 import com.viscit.yogamate.ui.components.AppHeader
 import com.viscit.yogamate.ui.theme.Ink
 import com.viscit.yogamate.ui.theme.LavenderLight
@@ -51,7 +50,7 @@ import com.viscit.yogamate.ui.theme.OutlineSoft
 
 @Composable
 fun AchievementScreen(onProfile: () -> Unit, onOpenHistory: () -> Unit) {
-    val achievements = Achievements.compute(AppSession.history)
+    val achievements = AppSession.achievements
     val earned = achievements.count { it.achieved }
 
     Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp)) {

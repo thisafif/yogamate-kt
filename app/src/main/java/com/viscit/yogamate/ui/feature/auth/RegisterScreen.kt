@@ -47,6 +47,7 @@ fun RegisterScreen(onSuccess: () -> Unit, onLogin: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var submitting by remember { mutableStateOf(false) }
 
     val hasMinLength = password.length >= 8
     val hasDigit = password.any { it.isDigit() }
@@ -131,9 +132,15 @@ fun RegisterScreen(onSuccess: () -> Unit, onLogin: () -> Unit) {
                 !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> error = "Format email belum benar."
                 score < 3 -> error = "Kata sandi belum memenuhi semua syarat."
                 confirm != password -> error = "Konfirmasi kata sandi belum sama."
-                else -> { AppSession.login(name.trim(), email, password); onSuccess() }
+                else -> {
+                    submitting = true
+                    AppSession.register(name.trim(), email.trim(), password) { authError ->
+                        submitting = false
+                        if (authError == null) onSuccess() else error = authError
+                    }
+                }
             }
-        }, trailingIcon = { ArrowForwardIcon() })
+        }, enabled = !submitting, trailingIcon = { ArrowForwardIcon() })
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.Center, modifier = Modifier.fillMaxWidth()) {
             Text("Sudah punya akun? ", style = MaterialTheme.typography.bodyMedium, color = Muted)
