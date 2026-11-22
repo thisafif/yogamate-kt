@@ -51,6 +51,7 @@ import com.viscit.yogamate.ui.feature.profile.ProfileScreen
 import com.viscit.yogamate.ui.feature.yoga.CompleteScreen
 import com.viscit.yogamate.ui.feature.yoga.SessionScreen
 import com.viscit.yogamate.ui.feature.yoga.SetupScreen
+import com.viscit.yogamate.ui.feature.yoga.PoseCatalogScreen
 import com.viscit.yogamate.ui.theme.Ink
 import com.viscit.yogamate.ui.theme.Lime
 import com.viscit.yogamate.ui.theme.Muted
@@ -69,6 +70,7 @@ object Routes {
     const val YOGA_SETUP = "yoga/setup"
     const val YOGA_SESSION = "yoga/session"
     const val YOGA_COMPLETE = "yoga/complete"
+    const val POSE_CATALOG = "yoga/catalog"
 
     val TABS = listOf(HOME, ACTIVITY, ACHIEVEMENT)
 }
@@ -223,6 +225,7 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
             screen(Routes.EDUCATION) { EducationScreen(
                 onBack = { nav.popBackStack() },
             ) }
+            screen(Routes.POSE_CATALOG) { PoseCatalogScreen(onBack = { nav.popBackStack() }) }
             // Link internal Profil keluar lewat popBackStack() dulu (buang state Profil),
             // lalu navigate dengan pola tab — mencegah stack [tab, PROFIL, tab] yang
             // membuat navigasi bottom bar macet/Profil "menguasai" tab.
@@ -246,6 +249,7 @@ fun YogaMateApp(nav: NavHostController = rememberNavController()) {
                         restoreState = true
                     }
                 },
+                onOpenPoses = { nav.navigate(Routes.POSE_CATALOG) },
             ) }
             // ← pada alur setup mundur satu step (step 1 = keluar); ✕ keluar ke beranda.
             // Reset progress ditangani onDispose di SetupScreen (tanpa kilatan step 1).

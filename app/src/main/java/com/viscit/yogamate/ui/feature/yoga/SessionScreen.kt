@@ -118,7 +118,7 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
     LaunchedEffect(Unit) { if (!hasPermission) requestPermission.launch(Manifest.permission.CAMERA) }
 
     val recognition = remember { RecognitionCounter() }
-    val poseByIndex = remember { Poses.ALL.associateBy { it.classIndex } }
+    val poseByIndex = remember { Poses.DETECTION.associateBy { it.classId } }
     val totalSec = YogaSessionState.durationMin * 60
     var remaining by remember { mutableIntStateOf(totalSec) }
     var paused by remember { mutableStateOf(false) }
@@ -162,7 +162,7 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
         if (hasPermission) {
             CameraPreview(
                 Modifier.fillMaxSize(), cameraState, poseDetected, mlAvailable,
-                recognition, YogaSessionState.pose.classIndex,
+                recognition, YogaSessionState.pose.modelClassId,
             )
         } else {
             Box(
@@ -211,7 +211,7 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     val detected = poseByIndex[recognition.detectedIndex]
-                    val detectedColor = if (detected?.classIndex == YogaSessionState.pose.classIndex) Lime else Color.White
+                    val detectedColor = if (detected?.classId == YogaSessionState.pose.modelClassId) Lime else Color.White
                     OverlayChip {
                         Text(
                             "Hasil deteksi: ${detected?.name ?: "Belum terdeteksi"}",
@@ -302,7 +302,7 @@ private fun CameraPreview(
     poseDetected: MutableState<Boolean?>,
     mlAvailable: MutableState<Boolean>,
     recognition: RecognitionCounter,
-    targetClassIndex: Int,
+    targetClassId: Int,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -328,7 +328,7 @@ private fun CameraPreview(
                 analyzerExecutor.execute {
                     val predicted = runCatching { classifier.classify(frame) }.getOrNull()
                     if (predicted != null) {
-                        mainHandler.post { recognition.record(predicted, targetClassIndex) }
+                        mainHandler.post { recognition.record(predicted, targetClassId) }
                     }
                 }
             }

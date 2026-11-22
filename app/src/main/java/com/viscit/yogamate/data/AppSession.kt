@@ -285,13 +285,13 @@ object YogaSessionState {
     var resultAccuracy by mutableStateOf(0)
 
     fun ensurePose() {
-        if (currentPose == null) currentPose = Poses.ALL.first()
+        if (currentPose == null) currentPose = Poses.GACHA.first()
     }
 
     fun reset() {
         step = 1
         level = Level.PEMULA
-        pose = Poses.ALL.first()
+        pose = Poses.GACHA.first()
         durationMin = 1
         resultAccuracy = 0
     }

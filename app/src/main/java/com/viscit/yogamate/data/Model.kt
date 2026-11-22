@@ -21,7 +21,10 @@ data class Pose(
     val slug: String = "",
     val linkImg: String = "",
     val audio: String = "",
+    val modelClassId: Int = classIndex,
 )
+
+data class DetectionPose(val classId: Int, val name: String, val level: Level)
 
 data class HistoryItem(
     val id: Long,
@@ -56,14 +59,33 @@ object Poses {
     // Satu-satunya sumber katalog: 15 pose dari CSV seed. Tidak ada fallback hardcode.
     lateinit var ALL: List<Pose>
         private set
+    lateinit var DETECTION: List<DetectionPose>
+        private set
+    lateinit var GACHA: List<Pose>
+        private set
 
     /** Dipanggil dari AppSession.init, sebelum UI dibuat. Gagal keras bila seed tidak valid. */
     fun loadFrom(context: Context) {
         ALL = PoseSeedLoader.load(context)
+        DETECTION = DetectionPoseLoader.load(context)
+        val gachaClassIds = mapOf(
+            "cobra-pose" to 10, "sitting-pose" to 57, "cat-cow-pose" to 7,
+            "seated-forward-bend-pose" to 52, "reverse-warrior-pose" to 72,
+            "extended-revolved-side-angle-pose" to 21, "extended-revolved-triangle-pose" to 22,
+            "standing-big-toe-hold-pose" to 60, "lords-dance-pose" to 39, "boat-pose" to 2,
+            "plow-pose" to 45, "crane-crow-pose" to 14, "supported-headstand-pose" to 63,
+            "split-pose" to 58, "wheel-pose" to 69,
+        )
+        GACHA = ALL.map { pose ->
+            pose.copy(modelClassId = gachaClassIds[pose.slug] ?: -1)
+        }
+        check(GACHA.all { it.modelClassId >= 0 }) { "Ada pose Gacha yang tidak terpetakan ke model 82 kelas" }
+        check(GACHA.all { pose -> DETECTION.any { it.classId == pose.modelClassId } })
+        check(GACHA.map { it.modelClassId }.toSet().size == GACHA.size) { "Mapping class ID Gacha duplikat" }
     }
 
     fun random(level: Level? = null): Pose {
-        val pool = if (level == null) ALL else ALL.filter { it.level == level }.ifEmpty { ALL }
+        val pool = if (level == null) GACHA else GACHA.filter { it.level == level }.ifEmpty { GACHA }
         return pool.random()
     }
 }
