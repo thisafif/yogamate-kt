@@ -1,6 +1,9 @@
 package com.viscit.yogamate.data
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.util.Calendar
 import java.util.Locale
 
@@ -57,17 +60,39 @@ enum class AchievementIcon { SPROUT, FLOWER, FIRE, SPARKLE, HEART }
 
 object Poses {
     // Satu-satunya sumber katalog: 15 pose dari CSV seed. Tidak ada fallback hardcode.
-    lateinit var ALL: List<Pose>
+    var ALL by mutableStateOf<List<Pose>>(emptyList())
         private set
-    lateinit var DETECTION: List<DetectionPose>
+    var DETECTION by mutableStateOf<List<DetectionPose>>(emptyList())
         private set
-    lateinit var GACHA: List<Pose>
+    var GACHA by mutableStateOf<List<Pose>>(emptyList())
         private set
 
     /** Dipanggil dari AppSession.init, sebelum UI dibuat. Gagal keras bila seed tidak valid. */
     fun loadFrom(context: Context) {
-        ALL = PoseSeedLoader.load(context)
-        DETECTION = DetectionPoseLoader.load(context)
+        install(PoseSeedLoader.load(context), DetectionPoseLoader.load(context))
+    }
+
+    /** Pasangkan URL media dari Firestore ke seed lokal lewat ID stabil. */
+    fun applyRemoteMedia(remote: List<Pose>) {
+        require(remote.size == ALL.size) { "Firestore harus berisi ${ALL.size} pose, ditemukan ${remote.size}" }
+        val byLabel = remote.associateBy { it.labelId }
+        require(byLabel.size == ALL.size && ALL.all { it.labelId in byLabel }) { "labelId pose Firestore duplikat atau tidak lengkap" }
+        val merged = ALL.map { seed ->
+            val cloud = byLabel.getValue(seed.labelId)
+            require(cloud.classIndex == seed.classIndex && cloud.slug == seed.slug) {
+                "Mapping pose Firestore tidak sesuai seed untuk ${seed.slug}"
+            }
+            seed.copy(
+                linkImg = cloud.linkImg.ifBlank { seed.linkImg },
+                audio = cloud.audio.ifBlank { seed.audio },
+            )
+        }
+        install(merged, DETECTION)
+    }
+
+    private fun install(poses: List<Pose>, detections: List<DetectionPose>) {
+        ALL = poses
+        DETECTION = detections
         val gachaClassIds = mapOf(
             "cobra-pose" to 10, "sitting-pose" to 57, "cat-cow-pose" to 7,
             "seated-forward-bend-pose" to 52, "reverse-warrior-pose" to 72,
@@ -76,12 +101,13 @@ object Poses {
             "plow-pose" to 45, "crane-crow-pose" to 14, "supported-headstand-pose" to 63,
             "split-pose" to 58, "wheel-pose" to 69,
         )
-        GACHA = ALL.map { pose ->
+        GACHA = poses.map { pose ->
             pose.copy(modelClassId = gachaClassIds[pose.slug] ?: -1)
         }
         check(GACHA.all { it.modelClassId >= 0 }) { "Ada pose Gacha yang tidak terpetakan ke model 82 kelas" }
         check(GACHA.all { pose -> DETECTION.any { it.classId == pose.modelClassId } })
         check(GACHA.map { it.modelClassId }.toSet().size == GACHA.size) { "Mapping class ID Gacha duplikat" }
+        YogaSessionState.refreshPoseMedia(GACHA)
     }
 
     fun random(level: Level? = null): Pose {

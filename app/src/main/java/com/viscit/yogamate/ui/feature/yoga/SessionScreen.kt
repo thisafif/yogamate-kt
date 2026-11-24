@@ -2,6 +2,8 @@ package com.viscit.yogamate.ui.feature.yoga
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -47,6 +49,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +68,7 @@ import com.viscit.yogamate.R
 import com.viscit.yogamate.data.AppSession
 import com.viscit.yogamate.data.HistoryItem
 import com.viscit.yogamate.data.Poses
+import com.viscit.yogamate.data.PoseMediaCache
 import com.viscit.yogamate.data.TimeUtil
 import com.viscit.yogamate.data.YogaSessionState
 import com.viscit.yogamate.data.engine.POSE_CONNECTIONS
@@ -123,6 +127,42 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
     var remaining by remember { mutableIntStateOf(totalSec) }
     var paused by remember { mutableStateOf(false) }
     var finished by remember { mutableStateOf(false) }
+
+    // Audio panduan mulai otomatis saat sesi dibuka dan ikut jeda/lanjut sesi.
+    val audioUrl = YogaSessionState.pose.audio
+    var audioPrepared by remember(audioUrl) { mutableStateOf(false) }
+    var audioCompleted by remember(audioUrl) { mutableStateOf(false) }
+    val pausedNow by rememberUpdatedState(paused)
+    val audioPlayer = remember(audioUrl) { MediaPlayer() }
+    DisposableEffect(audioUrl, audioPlayer) {
+        val audioFile = PoseMediaCache.cachedFile(context, audioUrl)
+        if (audioFile != null) {
+            runCatching {
+                audioPlayer.isLooping = false
+                audioPlayer.setDataSource(audioFile.absolutePath)
+                audioPlayer.setOnPreparedListener { player ->
+                    audioPrepared = true
+                    if (!pausedNow) player.start()
+                }
+                audioPlayer.setOnCompletionListener { audioCompleted = true }
+                audioPlayer.setOnErrorListener { _, what, extra ->
+                    Log.w(TAG, "Audio panduan gagal diputar: $what/$extra")
+                    true
+                }
+                audioPlayer.prepareAsync()
+            }.onFailure { Log.w(TAG, "Gagal menyiapkan audio panduan", it) }
+        }
+        onDispose {
+            runCatching { audioPlayer.stop() }
+            audioPlayer.release()
+        }
+    }
+    LaunchedEffect(paused, audioPrepared) {
+        if (audioPrepared) runCatching {
+            if (paused && audioPlayer.isPlaying) audioPlayer.pause()
+            else if (!paused && !audioPlayer.isPlaying && !audioCompleted && audioPlayer.currentPosition > 0) audioPlayer.start()
+        }
+    }
 
     LaunchedEffect(paused, finished) {
         while (!paused && !finished && remaining > 0) {
