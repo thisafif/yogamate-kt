@@ -45,6 +45,7 @@ object AppSession {
     fun init(context: Context) {
         Poses.loadFrom(context)
         YogaSessionState.ensurePose()
+        loadPoseMediaFromFirestore()
         prefs = context.applicationContext.getSharedPreferences("yogamate", Context.MODE_PRIVATE)
         onboardingDone = prefs.getBoolean("onboarding_done", false)
         // Start Firebase accounts without prototype profile or history data.
@@ -84,6 +85,37 @@ object AppSession {
     }
 
     private fun userRef(user: FirebaseUser) = db.collection("users").document(user.uid)
+
+    /** Ambil URL media sekali saat app mulai; katalog CSV tetap jadi fallback offline. */
+    private fun loadPoseMediaFromFirestore() {
+        db.collection("poses").get()
+            .addOnSuccessListener { snapshot ->
+                val remote = snapshot.documents.mapNotNull { doc ->
+                    val labelId = (doc.getLong("labelId") ?: doc.getLong("label_id"))?.toInt() ?: return@mapNotNull null
+                    val classIndex = (doc.getLong("classIndex") ?: doc.getLong("class_index"))?.toInt() ?: return@mapNotNull null
+                    val slug = doc.getString("slug").orEmpty()
+                    Pose(
+                        name = doc.getString("name") ?: doc.getString("nama_pose").orEmpty(),
+                        sanskrit = doc.getString("sanskrit") ?: doc.getString("nama_alt").orEmpty(),
+                        level = Level.PEMULA,
+                        description = "",
+                        steps = emptyList(),
+                        labelId = labelId,
+                        classIndex = classIndex,
+                        classLabel = doc.getString("classLabel") ?: doc.getString("class_label").orEmpty(),
+                        slug = slug,
+                        linkImg = firstString(doc, "imageUrl", "ImageURL", "linkImg", "link_img"),
+                        audio = firstString(doc, "audioUrl", "AudioURL", "audio", "sourceAudioPath"),
+                    )
+                }
+                runCatching { Poses.applyRemoteMedia(remote) }
+                    .onFailure { Log.w(TAG, "Pose media Firestore tidak cocok dengan seed; memakai data lokal", it) }
+            }
+            .addOnFailureListener { Log.w(TAG, "Tidak dapat memuat URL media pose; memakai data lokal", it) }
+    }
+
+    private fun firstString(doc: DocumentSnapshot, vararg fields: String): String =
+        fields.firstNotNullOfOrNull { field -> doc.getString(field)?.takeIf(String::isNotBlank) }.orEmpty()
 
     private fun detachCloudListeners() {
         profileListener?.remove(); profileListener = null
@@ -285,13 +317,18 @@ object YogaSessionState {
     var resultAccuracy by mutableStateOf(0)
 
     fun ensurePose() {
-        if (currentPose == null) currentPose = Poses.ALL.first()
+        if (currentPose == null) currentPose = Poses.GACHA.first()
+    }
+
+    fun refreshPoseMedia(catalog: List<Pose>) {
+        val selected = currentPose ?: return
+        currentPose = catalog.firstOrNull { it.slug == selected.slug } ?: selected
     }
 
     fun reset() {
         step = 1
         level = Level.PEMULA
-        pose = Poses.ALL.first()
+        pose = Poses.GACHA.first()
         durationMin = 1
         resultAccuracy = 0
     }

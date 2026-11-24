@@ -88,7 +88,7 @@ fun DetailSheet(item: HistoryItem, onDismiss: () -> Unit, onStartYoga: () -> Uni
             )
             Spacer(Modifier.height(20.dp))
             YmPrimaryButton("Latihan lagi", onClick = {
-                Poses.ALL.firstOrNull { it.name == item.poseName }?.let { repeated ->
+                Poses.GACHA.firstOrNull { it.name == item.poseName }?.let { repeated ->
                     YogaSessionState.pose = repeated
                     YogaSessionState.level = item.level
                     YogaSessionState.durationMin = item.minutes.coerceIn(1, 5)

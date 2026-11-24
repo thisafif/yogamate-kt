@@ -64,11 +64,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.viscit.yogamate.R
 import com.viscit.yogamate.data.Level
 import com.viscit.yogamate.data.Poses
+import com.viscit.yogamate.data.PoseMediaCache
 import com.viscit.yogamate.data.YogaSessionState
 import com.viscit.yogamate.ui.components.ArrowForwardIcon
 import com.viscit.yogamate.ui.components.ProgressSegments
@@ -94,6 +97,11 @@ fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> U
         onDispose { if (!continuedToSession) YogaSessionState.reset() }
     }
     var gachaRolling by remember { mutableStateOf(false) }
+    var downloadingMedia by remember { mutableStateOf(false) }
+    var downloadProgress by remember { mutableStateOf("") }
+    var downloadError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     // Keluar dari step 2 (back/close) → matikan rolling agar tidak me-roll ulang saat kembali.
     LaunchedEffect(step) { if (step != 2) gachaRolling = false }
     Column(
@@ -124,8 +132,25 @@ fun SetupScreen(onBack: () -> Unit, onClose: () -> Unit, onStartSession: () -> U
                 enabled = !gachaRolling,
                 leadingIcon = { Icon(Icons.Default.Shuffle, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
             3 -> YmPrimaryButton("Pilih durasi", { YogaSessionState.step = 4 }, trailingIcon = { ArrowForwardIcon() })
-            else -> YmPrimaryButton("Mulai latihan", { continuedToSession = true; onStartSession() }, leadingIcon = { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp)) })
+            else -> YmPrimaryButton(
+                if (downloadingMedia) "Mengunduh media… $downloadProgress" else "Mulai latihan",
+                {
+                    downloadingMedia = true
+                    downloadError = null
+                    scope.launch {
+                        val result = PoseMediaCache.downloadAll(context, Poses.GACHA) { done, total ->
+                            downloadProgress = "$done/$total"
+                        }
+                        downloadingMedia = false
+                        result.onSuccess { continuedToSession = true; onStartSession() }
+                            .onFailure { downloadError = "Media belum bisa diunduh. Periksa koneksi lalu coba lagi." }
+                    }
+                },
+                enabled = !downloadingMedia,
+                leadingIcon = { Icon(Icons.Default.PlayArrow, null, tint = Color.White, modifier = Modifier.size(20.dp)) },
+            )
         }
+        downloadError?.let { Text(it, color = Muted, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) }
         Spacer(Modifier.height(24.dp))
     }
 }
@@ -280,9 +305,12 @@ private fun StepPose(onReRoll: () -> Unit) {
     Spacer(Modifier.height(12.dp))
     Box {
         Surface(shape = RoundedCornerShape(24.dp), color = LavenderSoft, modifier = Modifier.fillMaxWidth()) {
-            Image(
-                painterResource(R.drawable.ilustrasi_pose),
-                "Ilustrasi ${pose.name}",
+            AsyncImage(
+                model = pose.linkImg.takeIf { it.startsWith("https://") || it.startsWith("http://") },
+                contentDescription = "Pose ${pose.name}",
+                placeholder = painterResource(R.drawable.ilustrasi_pose),
+                error = painterResource(R.drawable.ilustrasi_pose),
+                contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxWidth().height(220.dp).padding(20.dp),
             )
         }

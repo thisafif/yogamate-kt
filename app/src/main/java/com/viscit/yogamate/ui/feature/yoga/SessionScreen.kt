@@ -2,6 +2,8 @@ package com.viscit.yogamate.ui.feature.yoga
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -47,6 +49,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,6 +68,7 @@ import com.viscit.yogamate.R
 import com.viscit.yogamate.data.AppSession
 import com.viscit.yogamate.data.HistoryItem
 import com.viscit.yogamate.data.Poses
+import com.viscit.yogamate.data.PoseMediaCache
 import com.viscit.yogamate.data.TimeUtil
 import com.viscit.yogamate.data.YogaSessionState
 import com.viscit.yogamate.data.engine.POSE_CONNECTIONS
@@ -118,11 +122,47 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
     LaunchedEffect(Unit) { if (!hasPermission) requestPermission.launch(Manifest.permission.CAMERA) }
 
     val recognition = remember { RecognitionCounter() }
-    val poseByIndex = remember { Poses.ALL.associateBy { it.classIndex } }
+    val poseByIndex = remember { Poses.DETECTION.associateBy { it.classId } }
     val totalSec = YogaSessionState.durationMin * 60
     var remaining by remember { mutableIntStateOf(totalSec) }
     var paused by remember { mutableStateOf(false) }
     var finished by remember { mutableStateOf(false) }
+
+    // Audio panduan mulai otomatis saat sesi dibuka dan ikut jeda/lanjut sesi.
+    val audioUrl = YogaSessionState.pose.audio
+    var audioPrepared by remember(audioUrl) { mutableStateOf(false) }
+    var audioCompleted by remember(audioUrl) { mutableStateOf(false) }
+    val pausedNow by rememberUpdatedState(paused)
+    val audioPlayer = remember(audioUrl) { MediaPlayer() }
+    DisposableEffect(audioUrl, audioPlayer) {
+        val audioFile = PoseMediaCache.cachedFile(context, audioUrl)
+        if (audioFile != null) {
+            runCatching {
+                audioPlayer.isLooping = false
+                audioPlayer.setDataSource(audioFile.absolutePath)
+                audioPlayer.setOnPreparedListener { player ->
+                    audioPrepared = true
+                    if (!pausedNow) player.start()
+                }
+                audioPlayer.setOnCompletionListener { audioCompleted = true }
+                audioPlayer.setOnErrorListener { _, what, extra ->
+                    Log.w(TAG, "Audio panduan gagal diputar: $what/$extra")
+                    true
+                }
+                audioPlayer.prepareAsync()
+            }.onFailure { Log.w(TAG, "Gagal menyiapkan audio panduan", it) }
+        }
+        onDispose {
+            runCatching { audioPlayer.stop() }
+            audioPlayer.release()
+        }
+    }
+    LaunchedEffect(paused, audioPrepared) {
+        if (audioPrepared) runCatching {
+            if (paused && audioPlayer.isPlaying) audioPlayer.pause()
+            else if (!paused && !audioPlayer.isPlaying && !audioCompleted && audioPlayer.currentPosition > 0) audioPlayer.start()
+        }
+    }
 
     LaunchedEffect(paused, finished) {
         while (!paused && !finished && remaining > 0) {
@@ -162,7 +202,7 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
         if (hasPermission) {
             CameraPreview(
                 Modifier.fillMaxSize(), cameraState, poseDetected, mlAvailable,
-                recognition, YogaSessionState.pose.classIndex,
+                recognition, YogaSessionState.pose.modelClassId,
             )
         } else {
             Box(
@@ -211,7 +251,7 @@ fun SessionScreen(onBack: () -> Unit, onClose: () -> Unit, onComplete: () -> Uni
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     val detected = poseByIndex[recognition.detectedIndex]
-                    val detectedColor = if (detected?.classIndex == YogaSessionState.pose.classIndex) Lime else Color.White
+                    val detectedColor = if (detected?.classId == YogaSessionState.pose.modelClassId) Lime else Color.White
                     OverlayChip {
                         Text(
                             "Hasil deteksi: ${detected?.name ?: "Belum terdeteksi"}",
@@ -302,7 +342,7 @@ private fun CameraPreview(
     poseDetected: MutableState<Boolean?>,
     mlAvailable: MutableState<Boolean>,
     recognition: RecognitionCounter,
-    targetClassIndex: Int,
+    targetClassId: Int,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -328,7 +368,7 @@ private fun CameraPreview(
                 analyzerExecutor.execute {
                     val predicted = runCatching { classifier.classify(frame) }.getOrNull()
                     if (predicted != null) {
-                        mainHandler.post { recognition.record(predicted, targetClassIndex) }
+                        mainHandler.post { recognition.record(predicted, targetClassId) }
                     }
                 }
             }

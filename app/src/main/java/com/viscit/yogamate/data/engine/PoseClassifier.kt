@@ -6,6 +6,7 @@ import ai.onnxruntime.OrtEnvironment
 import java.nio.FloatBuffer
 
 private const val MODEL_ASSET = "gcn_model.onnx"
+private const val MODEL_DATA_ASSET = "gcn_model.onnx.data"
 private const val INPUT_NAME = "node_features"
 private const val LANDMARKS = 33
 private const val FEATURES = 5
@@ -14,15 +15,20 @@ private const val EPSILON = 1e-6f
 data class PosePrediction(val classIndex: Int, val confidence: Float)
 
 /**
- * Klasifier GCN dari MODELLL.zip. Output index adalah class_index yang sama dengan
- * class_index pada CSV seed pose (lihat export_metadata.json di zip).
+ * Classifier GCN 82 kelas. Output index mengikuti class_id pada yoga82_difficulty_labels.csv.
  *
  * Preprocessing wajib mengikuti notebook 07: koordinat direlatifkan terhadap titik
  * tengah pinggul lalu dibagi jarak shoulder-center ke hip-center (sumbu x/y saja).
  */
 class PoseClassifier(context: Context) {
     private val env = OrtEnvironment.getEnvironment()
-    private val session = env.createSession(context.assets.open(MODEL_ASSET).use { it.readBytes() })
+    private val modelFile = java.io.File(context.codeCacheDir, MODEL_ASSET)
+    private val dataFile = java.io.File(context.codeCacheDir, MODEL_DATA_ASSET)
+    init {
+        context.assets.open(MODEL_ASSET).use { input -> modelFile.outputStream().use { output -> input.copyTo(output) } }
+        context.assets.open(MODEL_DATA_ASSET).use { input -> dataFile.outputStream().use { output -> input.copyTo(output) } }
+    }
+    private val session = env.createSession(modelFile.absolutePath)
 
     /** null bila tubuh tidak valid untuk dinormalisasi (skala terlalu kecil/NaN). */
     fun classify(frame: PoseFrame): PosePrediction? {
@@ -39,7 +45,7 @@ class PoseClassifier(context: Context) {
                 } ?: return null
                 var best = 0
                 for (i in 1 until row.size) if (row[i] > row[best]) best = i
-                if (best !in 0 until 15) return null
+                if (row.size != 82) return null
 
                 return PosePrediction(best, softmaxConfidence(row))
             } finally {
